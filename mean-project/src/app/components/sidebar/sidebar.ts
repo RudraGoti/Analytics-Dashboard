@@ -1,18 +1,21 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
   templateUrl: './sidebar.html',
-  styleUrl: './sidebar.css'
+  styleUrls: ['./sidebar.css']
 })
 export class SidebarComponent {
 
-  isCollapsed = false;
+  @Input() isCollapsed = false;
+
+  @Output() toggle = new EventEmitter<void>();
+
   isMobileMenuOpen = false;
 
   toggleSidebar() {
-    this.isCollapsed = !this.isCollapsed;
+    this.toggle.emit();
   }
 
   toggleMobileMenu() {

@@ -1,1 +1,25 @@
-<app-sidebar></app-sidebar>
+<div class="dashboard-layout"
+     [class.sidebar-collapsed]="isSidebarCollapsed">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar-container">
+    <app-sidebar
+      [isCollapsed]="isSidebarCollapsed"
+      (toggle)="toggleSidebar()">
+    </app-sidebar>
+  </div>
+
+  <!-- RIGHT SIDE -->
+  <div class="content-container">
+
+    <app-header
+      [isSidebarCollapsed]="isSidebarCollapsed">
+    </app-header>
+
+    <div class="page-content">
+      <router-outlet></router-outlet>
+    </div>
+
+  </div>
+
+</div>

@@ -1,0 +1,72 @@
+/* RESET */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+/* MAIN LAYOUT */
+.dashboard-layout{
+  display:flex;
+  width:100%;
+  height:100vh;
+
+  background:#eef1f6;
+
+  overflow:hidden;
+}
+
+/* SIDEBAR CONTAINER */
+.sidebar-container{
+  width:280px;
+
+  padding:20px;
+
+  transition:all 0.3s ease;
+
+  flex-shrink:0;
+}
+
+/* COLLAPSED SIDEBAR */
+.dashboard-layout.sidebar-collapsed
+.sidebar-container{
+  width:110px;
+}
+
+/* RIGHT SIDE CONTAINER */
+.content-container{
+  flex:1;
+
+  margin:20px 20px 20px 20px;
+
+  background:#ffffff;
+
+  border-radius:25px;
+
+  overflow:hidden;
+
+  display:flex;
+  flex-direction:column;
+
+  transition:all 0.3s ease;
+}
+
+/* HEADER AREA */
+app-header{
+  height:75px;
+
+  border-bottom:1px solid #e5e7eb;
+
+  flex-shrink:0;
+}
+
+/* PAGE CONTENT */
+.page-content{
+  flex:1;
+
+  padding:25px;
+
+  overflow-y:auto;
+
+  background:#f8fafc;
+}

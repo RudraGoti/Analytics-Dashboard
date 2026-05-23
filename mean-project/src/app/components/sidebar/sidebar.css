@@ -13,12 +13,12 @@ body {
 }
 
 .sidebar {
-  position: fixed;
+  position: relative;
   width: 270px;
-  margin: 16px;
+  margin: 0px;
   border-radius: 16px;
   background: #151A2D;
-  height: calc(100vh - 32px);
+  height: 100%;
   transition: all 0.4s ease;
 }
 
@@ -255,4 +255,14 @@ body {
 
 .nav-icon {
   font-size: 24px !important;
+}
+
+/* FULL HEIGHT INSIDE CONTAINER */
+.sidebar{
+  overflow: hidden;
+}
+
+/* SMOOTH CONTAINER FIT */
+.sidebar.collapsed{
+  width: 85px;
 }
