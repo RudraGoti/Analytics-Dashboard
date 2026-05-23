@@ -13,8 +13,23 @@ export class HeaderComponent implements OnInit {
   @Input() isSidebarCollapsed = false;
 
   pageTitle = 'Dashboard';
+  currentDate: string;
+  isDropdownOpen = false;
+  selectedFilter = 'This Year';
 
-  constructor(private router: Router) {}
+  constructor(private router: Router) {
+
+    const today = new Date();
+
+    this.currentDate = today.toLocaleDateString(
+      'en-GB',
+      {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      }
+    );
+  }
 
   ngOnInit(): void {
 
@@ -66,6 +81,20 @@ export class HeaderComponent implements OnInit {
       default:
         this.pageTitle = 'Dashboard';
     }
+  }
+
+  toggleDropdown() {
+
+    this.isDropdownOpen = !this.isDropdownOpen;
+
+  }
+
+  selectFilter(filterName: string) {
+
+    this.selectedFilter = filterName;
+
+    this.isDropdownOpen = false;
+
   }
 
 }

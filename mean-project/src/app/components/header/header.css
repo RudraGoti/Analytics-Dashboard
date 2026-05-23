@@ -1,45 +1,238 @@
 .header{
   width:100%;
-  height:100%;
+  height:auto;
+  min-height: 60px;
 
   display:flex;
   align-items:center;
   justify-content:space-between;
 
-  padding:0 25px;
+  padding:0 28px;
 
   background:#ffffff;
+
+  font-family:"Poppins", sans-serif;
 }
 
-/* LEFT SIDE */
+/* LEFT */
 .header-left{
   display:flex;
   align-items:center;
 }
 
-/* PAGE TITLE */
+/* TITLE */
 .page-title{
   font-size:24px;
   font-weight:600;
+
   color:#151A2D;
 }
 
-/* RIGHT SIDE */
-.header-right{
+/* RIGHT */
+.header-right {
+  display: flex;
+  align-items: center;
+  position: relative; /* IMPORTANT */
+  gap: 16px;
+}
+
+/* DATE + FILTER BOX */
+.header-box{
   display:flex;
   align-items:center;
-  gap:18px;
+  justify-content:center;
+
+  gap:8px;
+
+  height:42px;
+
+  padding:0 14px;
+
+  border:1px solid #e5e7eb;
+
+  border-radius:10px;
+
+  background:#ffffff;
+
+  color:#374151;
+
+  font-size:14px;
+  font-weight:500;
 }
 
-/* ICONS */
-.header-right .material-icons{
-  font-size:24px;
+/* BOX ICONS */
+.header-box .material-icons{
+  font-size:20px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  color:#374151;
+}
+
+/* SELECT */
+.month-filter select{
+  border:none;
+  outline:none;
+
+  background:transparent;
+
+  font-size:14px;
+  font-weight:500;
+
+  color:#111827;
+
   cursor:pointer;
+}
+
+/* RIGHT SIDE ICONS */
+.header-icon{
+  font-size:22px;
+
   color:#151A2D;
+
+  cursor:pointer;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
 
   transition:0.3s ease;
 }
 
-.header-right .material-icons:hover{
-  transform:scale(1.1);
+.header-icon:hover{
+  transform:scale(1.08);
+}
+
+/* CUSTOM DROPDOWN */
+.custom-dropdown{
+  position:relative;
+}
+
+/* DROPDOWN BUTTON */
+.dropdown-btn{
+  height:42px;
+
+  display:flex;
+  align-items:center;
+
+  gap:8px;
+
+  padding:0 14px;
+
+  border:1px solid #e5e7eb;
+
+  border-radius:10px;
+
+  background:#ffffff;
+
+  cursor:pointer;
+
+  transition:0.3s ease;
+
+  user-select:none;
+}
+
+.dropdown-btn:hover{
+  background:#f9fafb;
+}
+
+/* BUTTON TEXT */
+.dropdown-btn span{
+  font-size:14px;
+  font-weight:500;
+
+  color:#111827;
+}
+
+/* ICONS */
+.dropdown-btn .material-icons{
+  font-size:20px;
+  color:#374151;
+}
+
+/* ARROW */
+.arrow{
+  transition:0.3s ease;
+}
+
+.arrow.rotate{
+  transform:rotate(180deg);
+}
+
+/* DROPDOWN MENU */
+.dropdown-menu {
+  position: absolute;
+
+  top: 100%;
+  left: 0;
+
+  width: auto;          /* FIXED */
+  min-width: 180px;     /* gives proper readable size */
+  max-width: 220px;     /* prevents too wide dropdown */
+
+  background: #ffffff;
+
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+
+  padding: 8px;
+
+  opacity: 0;
+  visibility: hidden;
+
+  transform: translateY(-10px);
+  transition: all 0.25s ease;
+
+  z-index: 1000;
+}
+
+/* SHOW MENU */
+.dropdown-menu.show{
+  opacity:1;
+  visibility:visible;
+
+  transform:translateY(0);
+}
+
+/* ITEMS */
+.dropdown-item{
+  padding:12px 14px;
+
+  border-radius:10px;
+
+  font-size:14px;
+  font-weight:500;
+
+  color:#374151;
+
+  cursor:pointer;
+
+  transition:0.2s ease;
+}
+
+/* HOVER */
+.dropdown-item:hover{
+  background:#f3f4f6;
+
+  color:#111827;
+}
+
+.dropdown-btn {
+  box-sizing: border-box;
+}
+
+.custom-dropdown {
+  position: relative;
+  display: inline-block;
+  width: fit-content;
+}
+
+.dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+  width: fit-content;
 }
