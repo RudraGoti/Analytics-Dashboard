@@ -62,16 +62,16 @@ export class HeaderComponent implements OnInit {
         this.pageTitle = 'Notifications';
         break;
 
-      case 'team':
-        this.pageTitle = 'Team';
+      case 'Reports':
+        this.pageTitle = 'Reports';
         break;
 
       case 'analytics':
         this.pageTitle = 'Analytics';
         break;
 
-      case 'bookmarks':
-        this.pageTitle = 'Bookmarks';
+      case 'AddExpense':
+        this.pageTitle = 'Add Expense';
         break;
 
       case 'settings':

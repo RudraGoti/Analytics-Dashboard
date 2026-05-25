@@ -1,0 +1,111 @@
+/* DASHBOARD GRID */
+.dashboard-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  
+  margin-top: 0px;
+}
+
+/* COMMON CARD STYLE */
+.dash-card {
+  position: relative;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 20px;
+  
+  border-radius: 18px;
+
+  overflow: hidden;
+
+  transition: 0.3s ease;
+
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+
+  cursor: pointer;
+}
+
+.dash-card:hover {
+  transform: translateY(-5px);
+}
+
+/* LEFT CONTENT */
+.card-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  z-index: 2;
+}
+
+/* TITLE */
+.card-title {
+  font-size: 14px;
+  font-weight: 500;
+
+  color: rgba(255,255,255,0.8);
+}
+
+/* AMOUNT */
+.card-amount {
+  font-size: 28px;
+  font-weight: 700;
+
+  color: #ffffff;
+}
+
+/* ENTRIES */
+.card-entries {
+  font-size: 13px;
+
+  color: rgba(255,255,255,0.75);
+}
+
+/* ICON */
+.card-right .material-icons {
+  font-size: 44px;
+
+  color: rgba(255,255,255,0.22);
+
+  z-index: 2;
+}
+
+/* CARD 1 */
+.card-1 {
+  background: linear-gradient(135deg, #4F46E5, #6366F1);
+  font-family:"Poppins", sans-serif
+}
+
+/* CARD 2 */
+.card-2 {
+  background: linear-gradient(135deg, #059669, #10B981);
+  font-family:"Poppins", sans-serif
+}
+
+/* CARD 3 */
+.card-3 {
+  background: linear-gradient(135deg, #DC2626, #EF4444);
+  font-family:"Poppins", sans-serif
+}
+
+/* CARD 4 */
+.card-4 {
+  background: linear-gradient(135deg, #D97706, #F59E0B);
+  font-family:"Poppins", sans-serif
+}
+
+/* RESPONSIVE */
+@media (max-width: 1100px) {
+  .dashboard-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 650px) {
+  .dashboard-container {
+    grid-template-columns: 1fr;
+  }
+}

@@ -24,10 +24,10 @@ export const routes: Routes = [
   },
 
   {
-    path: 'team',
+    path: 'Reports',
     loadComponent: () =>
-      import('./pages/team/team')
-        .then(m => m.Team)
+      import('./pages/Reports/Reports')
+        .then(m => m.Reports)
   },
 
   {
@@ -38,10 +38,10 @@ export const routes: Routes = [
   },
 
   {
-    path: 'bookmarks',
+    path: 'AddExpense',
     loadComponent: () =>
-      import('./pages/bookmarks/bookmarks')
-        .then(m => m.Bookmarks)
+      import('./pages/AddExpense/AddExpense')
+        .then(m => m.AddExpense)
   },
 
   {
