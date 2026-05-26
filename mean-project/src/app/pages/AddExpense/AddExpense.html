@@ -1,1 +1,118 @@
-<p>AddExpense works!</p>
+
+	<!-- COUNTER -->
+	<div class="card">
+		<div class="card-title">Today's Counter (Sales)</div>
+		<input type="number" [(ngModel)]="counter" placeholder="Enter sales amount" />
+	</div>
+
+	<!-- EXPENSE TABLE -->
+	<div class="card">
+		<div class="card-header">
+			<div class="card-title">Expenses</div>
+			<button (click)="addExpense()">+ Add Expense</button>
+		</div>
+
+		<div class="table-wrapper">
+			<table>
+				<thead>
+					<tr>
+						<th>Title</th>
+						<th>Category</th>
+						<th>Amount</th>
+						<th>Status</th>
+						<th>Mode</th>
+						<th>Bill</th>
+						<th></th>
+					</tr>
+				</thead>
+
+				<tbody>
+					<tr *ngFor="let expense of expenses; let i = index">
+
+						<td><input [(ngModel)]="expense.title" /></td>
+						
+                        <td>
+                            <div class="custom-dropdown" (click)="toggleDropdown(i)" >
+
+                                <div class="selected">
+                                    <img [src]="expense.category?.icon || 'assets/default.png'" class="icon" />
+                                    <span>{{ expense.category?.label || 'Select Category' }}</span>
+                                    <span class="arrow">⌄</span>
+                                </div>
+
+                                <div class="dropdown-menu" *ngIf="expense.open">
+
+                                    <div 
+                                        class="dropdown-item"
+                                        *ngFor="let item of categoryOptions"
+                                        (click)="selectCategory(i, item, $event)"
+                                    >
+                                        <img [src]="item.icon" class="icon" />
+                                        <span>{{ item.label }}</span>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </td>
+
+						<td><input type="number" [(ngModel)]="expense.amount" /></td>
+
+						<!-- DROPDOWN 1 -->
+						<td>
+							<select class="modern-select" [(ngModel)]="expense.paymentStatus">
+								<option>Paid</option>
+								<option>Pending</option>
+							</select>
+						</td>
+
+						<!-- DROPDOWN 2 -->
+						<td>
+							<select class="modern-select" [(ngModel)]="expense.paymentMode">
+								<option>Cash</option>
+								<option>UPI</option>
+								<option>Card</option>
+							</select>
+						</td>
+
+						<!-- FILE UPLOAD -->
+						<td>
+							<input
+								type="file"
+								class="file-input"
+								(change)="expense.file = $event.target.files[0]"
+							/>
+						</td>
+
+						<td>
+							<button class="delete" (click)="removeExpense(i)">✕</button>
+						</td>
+
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+	<!-- SUMMARY -->
+	<div class="summary">
+		<div class="summary-card">
+			<span>Sales</span>
+			<strong>₹ {{ counter || 0 }}</strong>
+		</div>
+
+		<div class="summary-card">
+			<span>Total Expense</span>
+			<strong>₹ {{ totalExpense() }}</strong>
+		</div>
+
+		<div class="summary-card highlight">
+			<span>Net Profit</span>
+			<strong>₹ {{ (counter || 0) - totalExpense() }}</strong>
+		</div>
+	</div>
+
+	<!-- SAVE -->
+	<div class="footer">
+		<button (click)="saveAll()">Save All Data</button>
+	</div>
+

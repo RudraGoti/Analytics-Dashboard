@@ -25,57 +25,6 @@
 
     </div>
 
-    <!-- CUSTOM FILTER DROPDOWN -->
-    <div class="custom-dropdown">
-
-        <!-- BUTTON -->
-        <div class="dropdown-btn"
-            (click)="toggleDropdown()">
-
-        <span class="material-icons">
-            filter_alt
-        </span>
-
-        <span>
-            {{ selectedFilter }}
-        </span>
-
-        <span class="material-icons arrow"
-            [class.rotate]="isDropdownOpen">
-            expand_more
-        </span>
-
-    </div>
-
-  <!-- MENU -->
-  <div class="dropdown-menu"
-       [class.show]="isDropdownOpen">
-
-    <div class="dropdown-item"
-         (click)="selectFilter('This Month')">
-
-      This Month
-
-    </div>
-
-    <div class="dropdown-item"
-         (click)="selectFilter('Last Month')">
-
-      Last Month
-
-    </div>
-
-    <div class="dropdown-item"
-         (click)="selectFilter('This Year')">
-
-      This Year
-
-    </div>
-
-  </div>
-
-</div>
-
     <!-- ICONS -->
     <span class="material-icons header-icon">
       notifications

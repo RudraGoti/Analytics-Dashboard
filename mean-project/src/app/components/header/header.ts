@@ -14,8 +14,6 @@ export class HeaderComponent implements OnInit {
 
   pageTitle = 'Dashboard';
   currentDate: string;
-  isDropdownOpen = false;
-  selectedFilter = 'This Year';
 
   constructor(private router: Router) {
 
@@ -81,20 +79,6 @@ export class HeaderComponent implements OnInit {
       default:
         this.pageTitle = 'Dashboard';
     }
-  }
-
-  toggleDropdown() {
-
-    this.isDropdownOpen = !this.isDropdownOpen;
-
-  }
-
-  selectFilter(filterName: string) {
-
-    this.selectedFilter = filterName;
-
-    this.isDropdownOpen = false;
-
   }
 
 }

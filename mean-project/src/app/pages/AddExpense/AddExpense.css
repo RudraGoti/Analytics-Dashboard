@@ -1,0 +1,242 @@
+* {
+	font-family: "Poppins", sans-serif;
+}
+
+/* ===== COLORS ===== */
+:root {
+	--primary: #3b82f6;
+	--primary-dark: #1d4ed8;
+	--bg: #f6f8fc;
+	--card: #ffffff;
+	--text: #1f2937;
+	--muted: #6b7280;
+}
+
+/* PAGE */
+.expense-page {
+	max-width: 1100px;
+	margin: 40px auto;
+	padding: 20px;
+	background: var(--bg);
+}
+
+/* HEADER */
+.page-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 30px;
+}
+
+.page-header h1 {
+	margin: 0;
+	font-size: 28px;
+	color: var(--text);
+}
+
+.page-header p {
+	margin: 4px 0 0;
+	color: var(--muted);
+}
+
+.date-box {
+	background: #eef2ff;
+	padding: 10px 14px;
+	border-radius: 10px;
+}
+
+/* CARD */
+.card {
+	background: var(--card);
+	padding: 20px;
+	border-radius: 16px;
+	margin-bottom: 20px;
+	box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+}
+
+/* INPUTS */
+.card input {
+	width: 100%;
+	padding: 12px;
+	border-radius: 10px;
+	border: 1px solid #e5e7eb;
+	outline: none;
+	transition: 0.3s;
+}
+
+.card input:focus {
+	border-color: var(--primary);
+	box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+}
+
+/* TABLE */
+.table-wrapper {
+	overflow-x: auto;
+}
+
+table {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0 12px;
+}
+
+th {
+	text-align: left;
+	padding: 12px;
+	color: var(--muted);
+	font-weight: 600;
+}
+
+td {
+	background: #fff;
+	padding: 12px;
+	border-radius: 10px;
+}
+
+/* ===== MODERN DROPDOWN ===== */
+.modern-select {
+	width: 100%;
+	padding: 10px 12px;
+	border-radius: 10px;
+	border: 1px solid #e5e7eb;
+	background: linear-gradient(135deg, #ffffff, #f9fafb);
+	cursor: pointer;
+	transition: all 0.25s ease;
+	appearance: none;
+	background-image: url("data:image/svg+xml,%3Csvg fill='gray' viewBox='0 0 20 20'%3E%3Cpath d='M5 7l5 5 5-5'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 10px center;
+	background-size: 16px;
+}
+
+.modern-select:hover {
+	border-color: var(--primary);
+	transform: translateY(-1px);
+}
+
+.modern-select:focus {
+	border-color: var(--primary);
+	box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+	outline: none;
+}
+
+/* FILE INPUT */
+.file-input {
+	font-size: 12px;
+	padding: 6px;
+	border: 1px dashed #cbd5e1;
+	border-radius: 8px;
+	background: #f8fafc;
+	cursor: pointer;
+	transition: 0.3s;
+}
+
+.file-input:hover {
+	border-color: var(--primary);
+	background: #eef2ff;
+}
+
+/* BUTTON */
+button {
+	background: var(--primary);
+	color: white;
+	border: none;
+	padding: 10px 14px;
+	border-radius: 10px;
+	cursor: pointer;
+	transition: 0.3s;
+}
+
+button:hover {
+	background: var(--primary-dark);
+	transform: translateY(-2px);
+}
+
+/* DELETE */
+.delete {
+	background: #ef4444;
+}
+
+/* SUMMARY */
+.summary {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 16px;
+	margin-top: 20px;
+}
+
+.summary-card {
+	background: white;
+	padding: 18px;
+	border-radius: 14px;
+	box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+}
+
+.summary-card.highlight {
+	background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+	color: white;
+}
+
+.custom-dropdown {
+	width: 100%;
+	position: relative;
+	cursor: pointer;
+}
+
+.selected {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px;
+	border-radius: 8px;
+	border: 1px solid #e5e7eb;
+	background: #fafbff;
+	transition: 0.25s;
+}
+
+.selected:hover {
+	border-color: #3b82f6;
+	box-shadow: 0 0 0 2px rgba(59,130,246,0.12);
+}
+
+.icon {
+	width: 18px;
+	height: 18px;
+	margin-right: 8px;
+}
+
+.arrow {
+	font-size: 12px;
+	color: #6b7280;
+}
+
+.dropdown-menu {
+	position: absolute;
+	top: 110%;
+	left: 0;
+	width: 100%;
+	background: #fff;
+	border-radius: 10px;
+	box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+	z-index: 1000;
+	overflow: hidden;
+	animation: fadeIn 0.2s ease;
+}
+
+.dropdown-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px;
+	transition: 0.2s;
+}
+
+.dropdown-item:hover {
+	background: #f3f4f6;
+	transform: translateX(3px);
+}
+
+@keyframes fadeIn {
+	from { opacity: 0; transform: translateY(-8px); }
+	to { opacity: 1; transform: translateY(0); }
+}
