@@ -9,6 +9,21 @@
   font-family:"Poppins", sans-serif;
 }
 
+/* ---- Page ---- */
+.page-wrapper {
+  background: #f0f2f7;
+  min-height: 100vh;
+  padding: 32px 24px 60px;
+  color: #1a1d2e;
+}
+
+.page-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  letter-spacing: -0.03em;
+  color: #1a1d2e;
+}
 
 /* ---- Card ---- */
 .card {
@@ -43,14 +58,14 @@
 .currency-symbol {
   position: absolute;
   left: 12px;
-  font-family:"Poppins", sans-serif;
+  font-family: 'DM Mono', monospace;
   font-size: 0.95rem;
   color: #7b82a0;
   pointer-events: none;
 }
 
 .counter-input {
-  font-family:"Poppins", sans-serif;
+  font-family: 'DM Mono', monospace;
   font-size: 1rem;
   padding: 10px 14px 10px 30px;
   border: 1.5px solid #e2e6ef;
@@ -114,7 +129,7 @@
   box-shadow: 0 0 0 3px rgba(37,99,235,.1);
 }
 
-.tbl-input.mono { font-family:"Poppins", sans-serif; }
+.tbl-input.mono { font-family: 'DM Mono', monospace; }
 
 /* ---- Amount ---- */
 .amount-wrap { position: relative; }
@@ -126,7 +141,7 @@
   transform: translateY(-50%);
   font-size: 0.85rem;
   color: #7b82a0;
-  font-family:"Poppins", sans-serif;
+  font-family: 'DM Mono', monospace;
   pointer-events: none;
 }
 
@@ -243,7 +258,7 @@
 
 /* ---- Mode select ---- */
 .mode-select {
-  font-family: 'popins', sans-serif;
+  font-family:"Poppins", sans-serif;
   font-size: 0.875rem;
   padding: 9px 28px 9px 10px;
   border: 1.5px solid #e2e6ef;
@@ -338,9 +353,9 @@
 }
 
 .summary-value {
-  font-family:"Poppins", sans-serif;
+  font-family: 'DM Mono', monospace;
   font-size: 1.6rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
 
@@ -374,7 +389,15 @@
 
 .sync-btn:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37,99,235,.35); }
 .sync-btn:active { transform: translateY(0); }
-.sync-btn.synced { background: #16a34a; box-shadow: 0 4px 14px rgba(22,163,74,.3); }
+.sync-btn.synced  { background: #16a34a; box-shadow: 0 4px 14px rgba(22,163,74,.3); }
+.sync-btn.error   { background: #dc2626; box-shadow: 0 4px 14px rgba(220,38,38,.3); }
+.sync-btn:disabled { cursor: not-allowed; opacity: 0.85; transform: none; }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.spin { animation: spin 0.8s linear infinite; }
 
 /* ---- Footer ---- */
 .footer-notice {

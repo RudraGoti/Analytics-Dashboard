@@ -1,5 +1,3 @@
-
-
   <!-- Counter Card -->
   <div class="card counter-card">
     <div class="card-title">Today's Counter <span>(Sales)</span></div>
@@ -152,14 +150,33 @@
       </div>
     </div>
     <div class="summary-card sync-card">
-      <button class="sync-btn" type="button" (click)="syncToDatabase()" [class.synced]="synced">
-        <ng-container *ngIf="!synced">
+      <button
+        class="sync-btn"
+        type="button"
+        (click)="syncToDatabase()"
+        [class.synced]="synced"
+        [class.error]="syncError"
+        [disabled]="isSyncing"
+      >
+        <!-- Default state -->
+        <ng-container *ngIf="!synced && !syncError && !isSyncing">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="5" rx="9" ry="3" stroke="white" stroke-width="2"/><path d="M3 5v14c0 1.657 4.029 3 9 3s9-1.343 9-3V5" stroke="white" stroke-width="2"/><path d="M3 12c0 1.657 4.029 3 9 3s9-1.343 9-3" stroke="white" stroke-width="2"/></svg>
           Sync to Database
         </ng-container>
+        <!-- Loading state -->
+        <ng-container *ngIf="isSyncing">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="spin"><path d="M12 2a10 10 0 1 0 10 10" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>
+          Syncing…
+        </ng-container>
+        <!-- Success state -->
         <ng-container *ngIf="synced">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="white" stroke-width="2"/><path d="M8 12l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Synced!
+        </ng-container>
+        <!-- Error state -->
+        <ng-container *ngIf="syncError">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="white" stroke-width="2"/><path d="M12 8v4M12 16h.01" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+          Failed — Retry
         </ng-container>
       </button>
     </div>
@@ -170,4 +187,3 @@
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#16a34a" stroke-width="2"/><path d="M8 12l3 3 5-5" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     All data is saved and ready to sync with your backend.
   </div>
-
