@@ -20,7 +20,7 @@
 .page-title {
   font-size: 1.6rem;
   font-weight: 700;
-  margin-bottom: 24px;
+  margin-bottom: 0px;
   letter-spacing: -0.03em;
   color: #1a1d2e;
 }
@@ -101,6 +101,7 @@
 .expenses-table tbody tr.expense-row { vertical-align: middle; }
 .expenses-table tbody tr.expense-row td { padding: 6px 8px; }
 
+
 /* Column widths */
 .col-title   { min-width: 140px; }
 .col-cat     { min-width: 180px; }
@@ -156,7 +157,11 @@
 .counter-input[type=number] { -moz-appearance: textfield; }
 
 /* ---- Category dropdown ---- */
-.cat-wrap { position: relative; }
+.cat-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
 
 .cat-btn {
   width: 100%;
@@ -200,11 +205,16 @@
 
 .cat-btn.open .chevron { transform: rotate(180deg); }
 
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+
+/* Dropdown sits right below the button, inside the flex column */
 .cat-dropdown {
   display: none;
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
   background: #fff;
   border: 1.5px solid #e2e6ef;
   border-radius: 10px;
@@ -213,14 +223,23 @@
   min-width: 200px;
   overflow: hidden;
   animation: dropIn .15s ease;
-}
-
-@keyframes dropIn {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  margin-top: 4px;
+  /* Remove position: absolute entirely */
+  position: relative;
 }
 
 .cat-dropdown.open { display: block; }
+.cat-wrap::after {
+  display: none;
+}
+
+/* Spacer that pushes the card taller when any dropdown is open */
+.cat-wrap:has(.cat-dropdown.open)::after {
+  content: '';
+  display: block;
+  height: 160px;   /* roughly the dropdown height */
+  pointer-events: none;
+}
 
 .cat-option {
   display: flex;
@@ -425,4 +444,22 @@
 @media (max-width: 540px) {
   .summary-row { grid-template-columns: 1fr; }
   .page-wrapper { padding: 20px 14px 48px; }
+}
+
+.col-status .cat-btn,
+.col-mode .cat-btn {
+  width: 100%;
+}
+
+.col-status .cat-dropdown,
+.col-mode .cat-dropdown {
+  width: 100%;
+}
+
+.col-cat    .cat-wrap:has(.cat-dropdown.open)::after { height: 0px; }
+.col-status .cat-wrap:has(.cat-dropdown.open)::after { height: 0px;  }
+.col-mode   .cat-wrap:has(.cat-dropdown.open)::after { height: 0px; }
+
+.expenses-table tbody tr.expense-row {
+  vertical-align: top;   /* change from middle to top */
 }

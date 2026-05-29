@@ -51,7 +51,7 @@
                   [class.open]="openDropdown === i"
                   (click)="toggleDropdown(i)"
                 >
-                  <span class="cat-icon-wrap" [innerHTML]="getCategoryIcon(expense.category)"></span>
+                  <span class="cat-icon-wrap">{{ getCategoryIcon(expense.category) }}</span>
                   <span class="cat-name">{{ expense.category || 'Select…' }}</span>
                   <svg class="chevron" width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="currentColor"/></svg>
                 </button>
@@ -61,7 +61,7 @@
                     class="cat-option"
                     (click)="selectCategory(i, cat.name)"
                   >
-                    <span class="cat-icon-wrap" [innerHTML]="cat.icon"></span>
+                    <span class="cat-icon-wrap">{{ cat.icon }}</span>
                     <span>{{ cat.name }}</span>
                   </div>
                 </div>
@@ -84,25 +84,96 @@
 
             <!-- Status -->
             <td class="col-status">
-              <select
-                class="status-select"
-                [class.status-paid]="expense.status === 'Paid'"
-                [class.status-pending]="expense.status === 'Pending'"
-                [(ngModel)]="expense.status"
-              >
-                <option>Paid</option>
-                <option>Pending</option>
-              </select>
+              <div class="cat-wrap">
+
+                <button
+                  type="button"
+                  class="cat-btn"
+                  [class.open]="openStatusDropdown === i"
+                  (click)="toggleStatusDropdown(i)"
+                >
+                  <span class="cat-name">
+                    {{ expense.status || 'Select Status' }}
+                  </span>
+
+                  <svg class="chevron" width="10" height="6" viewBox="0 0 10 6">
+                    <path d="M0 0l5 6 5-6z" fill="currentColor"/>
+                  </svg>
+                </button>
+
+                <div class="cat-dropdown" [class.open]="openStatusDropdown === i">
+
+                  <div
+                    class="cat-option"
+                    (click)="selectStatus(i, 'Paid')"
+                  >
+                    Paid
+                  </div>
+
+                  <div
+                    class="cat-option"
+                    (click)="selectStatus(i, 'Pending')"
+                  >
+                    Pending
+                  </div>
+
+                </div>
+
+              </div>
             </td>
 
             <!-- Mode -->
             <td class="col-mode">
-              <select class="mode-select" [(ngModel)]="expense.mode">
-                <option>Cash</option>
-                <option>UPI</option>
-                <option>Card</option>
-                <option>Bank Transfer</option>
-              </select>
+              <div class="cat-wrap">
+
+                <button
+                  type="button"
+                  class="cat-btn"
+                  [class.open]="openModeDropdown === i"
+                  (click)="toggleModeDropdown(i)"
+                >
+                  <span class="cat-name">
+                    {{ expense.mode || 'Select Mode' }}
+                  </span>
+
+                  <svg class="chevron" width="10" height="6" viewBox="0 0 10 6">
+                    <path d="M0 0l5 6 5-6z" fill="currentColor"/>
+                  </svg>
+                </button>
+
+                <div class="cat-dropdown" [class.open]="openModeDropdown === i">
+
+                  <div
+                    class="cat-option"
+                    (click)="selectMode(i, 'Cash')"
+                  >
+                    Cash
+                  </div>
+
+                  <div
+                    class="cat-option"
+                    (click)="selectMode(i, 'UPI')"
+                  >
+                    UPI
+                  </div>
+
+                  <div
+                    class="cat-option"
+                    (click)="selectMode(i, 'Card')"
+                  >
+                    Card
+                  </div>
+
+                  <div
+                    class="cat-option"
+                    (click)="selectMode(i, 'Bank Transfer')"
+                  >
+                    Bank Transfer
+                  </div>
+
+                </div>
+
+              </div>
             </td>
 
             <!-- Description -->

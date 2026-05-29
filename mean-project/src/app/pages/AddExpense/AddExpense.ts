@@ -30,14 +30,44 @@ export class AddExpense {
 
   // ---------- Categories ----------
 
-  categories: Category[] = [
-    { name: 'Office Supplies', icon: '📁' },
-    { name: 'Github', icon: '🐱' },
-    { name: 'Instagram', icon: '📸' },
-    { name: 'LinkedIn', icon: '💼' },
-    { name: 'Facebook', icon: '📘' },
-    { name: 'Twitter', icon: '🐦' }
+  categories = [
+    { name: 'Product Purchase', icon: '🛒'},
+    { name: 'Rent', icon: '🏠'},
+    { name: 'Light Bill', icon: '💡'},
+    { name: 'Maintenance', icon: '🛠️'},
+    { name: 'Petrol', icon: '⛽'},
+    { name: 'Other', icon: '📦'}
   ];
+
+  getCategoryIcon(category: string): string {
+
+    switch (category) {
+
+      case 'Office Supplies':
+        return '📁';
+
+      case 'Product Purchase':
+        return '🛒';
+
+      case 'Rent':
+        return '🏠';
+
+      case 'Light Bill':
+        return '💡';
+
+      case 'Internet':
+        return '🌐';
+
+      case 'Salary':
+        return '💰';
+
+      case 'Transport':
+        return '🚚';
+
+      default:
+        return '📦';
+    }
+  }
 
   // ---------- Expense Data ----------
 
@@ -109,21 +139,18 @@ export class AddExpense {
   // ---------- Dropdown ----------
 
   toggleDropdown(index: number): void {
-    this.openDropdown =
-      this.openDropdown === index ? null : index;
+    if (this.openDropdown === index) {
+      this.openDropdown = null;
+    } else {
+      this.openDropdown = index;
+      this.openStatusDropdown = null;  // close others
+      this.openModeDropdown = null;
+    }
   }
 
   selectCategory(index: number, categoryName: string): void {
     this.expenses[index].category = categoryName;
     this.openDropdown = null;
-  }
-
-  getCategoryIcon(categoryName: string): string {
-    const found = this.categories.find(
-      c => c.name === categoryName
-    );
-
-    return found ? found.icon : '📁';
   }
 
   // ---------- Close Dropdown ----------
@@ -181,4 +208,40 @@ export class AddExpense {
       }
     );
   }
+
+openStatusDropdown: number | null = null;
+openModeDropdown: number | null = null;
+
+
+
+toggleStatusDropdown(index: number) {
+  if (this.openStatusDropdown === index) {
+    this.openStatusDropdown = null;
+  } else {
+    this.openStatusDropdown = index;
+    this.openDropdown = null;        // close others
+    this.openModeDropdown = null;
+  }
+}
+
+selectStatus(index: number, status: string) {
+  this.expenses[index].status = status;
+  this.openStatusDropdown = null;
+}
+
+toggleModeDropdown(index: number) {
+  if (this.openModeDropdown === index) {
+    this.openModeDropdown = null;
+  } else {
+    this.openModeDropdown = index;
+    this.openDropdown = null;        // close others
+    this.openStatusDropdown = null;
+  }
+}
+
+selectMode(index: number, mode: string) {
+  this.expenses[index].mode = mode;
+  this.openModeDropdown = null;
+}
+
 }
