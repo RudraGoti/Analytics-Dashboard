@@ -12,8 +12,10 @@ export interface Expense {
 }
 
 export interface DailyExpensePayload {
+  date: string;
   counter: number;
   expenses: Expense[];
+  action?: 'append' | 'replace';
 }
 
 @Injectable({
@@ -28,18 +30,17 @@ export class ExpenseService {
 
   // Save expenses
   saveExpenses(data: DailyExpensePayload): Observable<any> {
-
-    return this.http.post<any>(
-      this.apiUrl,
-      data
-    );
+    return this.http.post<any>(this.apiUrl, data);
   }
 
   // Fetch expenses
   getExpenses(): Observable<any[]> {
+    return this.http.get<any[]>(this.apiUrl);
+  }
 
-    return this.http.get<any[]>(
-      this.apiUrl
-    );
+  getExpenseByDate(date: string): Observable<any> {
+    return this.http.get<any>(this.apiUrl, {
+      params: { date }
+    });
   }
 }

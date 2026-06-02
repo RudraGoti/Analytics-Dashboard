@@ -1,7 +1,9 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ExpenseService, Expense } from '../../services/expense.service';
+import { DateService } from '../../services/date.service';
+import { Subscription } from 'rxjs';
 
 interface Category {
   name: string;
@@ -16,17 +18,25 @@ interface Category {
   styleUrls: ['./AddExpense.css']
 })
 
-export class AddExpense {
+export class AddExpense implements OnInit, OnDestroy {
 
   counter: number = 15450;
+  selectedDate: string = '';
 
   synced: boolean = false;
   syncError: boolean = false;
   isSyncing: boolean = false;
+  showDuplicateDateModal: boolean = false;
+  duplicateDateInfo: any = null;
 
   openDropdown: number | null = null;
+  private dateSubscription = new Subscription();
 
-  constructor(private expenseService: ExpenseService) {}
+  constructor(
+    private expenseService: ExpenseService,
+    private dateService: DateService,
+    private cd: ChangeDetectorRef
+  ) {}
 
   // ---------- Categories ----------
 
@@ -42,9 +52,6 @@ export class AddExpense {
   getCategoryIcon(category: string): string {
 
     switch (category) {
-
-      case 'Office Supplies':
-        return '📁';
 
       case 'Product Purchase':
         return '🛒';
@@ -69,12 +76,25 @@ export class AddExpense {
     }
   }
 
+  ngOnInit(): void {
+    const date = this.dateService.selectedDate$.getValue();
+    this.selectedDate = date;
+
+    this.dateSubscription = this.dateService.selectedDate$.subscribe((dateValue) => {
+      this.selectedDate = dateValue;
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.dateSubscription.unsubscribe();
+  }
+
   // ---------- Expense Data ----------
 
   expenses: Expense[] = [
     {
-      title: 'Office Supplies',
-      category: 'Office Supplies',
+      title: 'Product Purchase',
+      category: 'Product Purchase',
       amount: 1250,
       status: 'Paid',
       mode: 'Cash',
@@ -82,8 +102,8 @@ export class AddExpense {
     },
 
     {
-      title: 'Server Hosting',
-      category: 'Github',
+      title: 'Rent',
+      category: 'Rent',
       amount: 2100,
       status: 'Pending',
       mode: 'Cash',
@@ -91,8 +111,8 @@ export class AddExpense {
     },
 
     {
-      title: 'Client Lunch',
-      category: 'Instagram',
+      title: 'Transport',
+      category: 'Transport',
       amount: 2100,
       status: 'Pending',
       mode: 'UPI',
@@ -124,10 +144,10 @@ export class AddExpense {
   addExpense(): void {
     this.expenses.push({
       title: '',
-      category: 'Office Supplies',
+      category: '',
       amount: 0,
-      status: 'Pending',
-      mode: 'Cash',
+      status: '',
+      mode: '',
       description: ''
     });
   }
@@ -177,6 +197,7 @@ export class AddExpense {
     this.syncError = false;
 
     const payload = {
+      date: this.selectedDate,
       counter: this.counter,
       expenses: this.expenses
     };
@@ -189,9 +210,11 @@ export class AddExpense {
 
         this.isSyncing = false;
         this.synced = true;
+        try { this.cd.detectChanges(); } catch (e) {}
 
         setTimeout(() => {
           this.synced = false;
+          try { this.cd.detectChanges(); } catch (e) {}
         }, 2500);
       },
 
@@ -200,6 +223,16 @@ export class AddExpense {
         console.error('Save failed:', err);
 
         this.isSyncing = false;
+        try { this.cd.detectChanges(); } catch (e) {}
+
+        if (err.status === 409 && err.error?.conflict) {
+          this.duplicateDateInfo = err.error.data;
+          this.showDuplicateDateModal = true;
+          // ensure Angular updates the view immediately
+          try { this.cd.detectChanges(); } catch (e) {}
+          return;
+        }
+
         this.syncError = true;
 
         setTimeout(() => {
@@ -207,6 +240,105 @@ export class AddExpense {
         }, 3000);
       }
     );
+  }
+
+  replaceExistingRecord(): void {
+    if (this.isSyncing) {
+      return;
+    }
+
+    // close modal immediately for better UX
+    this.showDuplicateDateModal = false;
+    try { this.cd.detectChanges(); } catch (e) {}
+
+    this.isSyncing = true;
+    this.syncError = false;
+
+    const payload = {
+      date: this.selectedDate,
+      counter: this.counter,
+      expenses: this.expenses,
+      action: 'replace' as const
+    };
+
+    this.expenseService.saveExpenses(payload).subscribe(
+      (res: any) => {
+        console.log('Replaced existing date record:', res);
+        this.isSyncing = false;
+        this.synced = true;
+        this.showDuplicateDateModal = false;
+        try { this.cd.detectChanges(); } catch (e) {}
+
+        setTimeout(() => {
+          this.synced = false;
+          try { this.cd.detectChanges(); } catch (e) {}
+        }, 2500);
+      },
+      (err: any) => {
+        console.error('Replace failed:', err);
+        this.isSyncing = false;
+        this.showDuplicateDateModal = false;
+        this.syncError = true;
+        try { this.cd.detectChanges(); } catch (e) {}
+
+        setTimeout(() => {
+          this.syncError = false;
+          try { this.cd.detectChanges(); } catch (e) {}
+        }, 3000);
+      }
+    );
+  }
+
+  appendToExistingRecord(): void {
+    if (this.isSyncing) {
+      return;
+    }
+
+    // close modal immediately for better UX
+    this.showDuplicateDateModal = false;
+    try { this.cd.detectChanges(); } catch (e) {}
+
+    this.isSyncing = true;
+    this.syncError = false;
+
+    const payload = {
+      date: this.selectedDate,
+      counter: this.counter,
+      expenses: this.expenses,
+      action: 'append' as const
+    };
+
+    this.expenseService.saveExpenses(payload).subscribe(
+      (res: any) => {
+        console.log('Appended to existing date record:', res);
+        this.isSyncing = false;
+        this.synced = true;
+        this.showDuplicateDateModal = false;
+        try { this.cd.detectChanges(); } catch (e) {}
+
+        setTimeout(() => {
+          this.synced = false;
+          try { this.cd.detectChanges(); } catch (e) {}
+        }, 2500);
+      },
+      (err: any) => {
+        console.error('Append failed:', err);
+        this.isSyncing = false;
+        this.showDuplicateDateModal = false;
+        this.syncError = true;
+        try { this.cd.detectChanges(); } catch (e) {}
+
+        setTimeout(() => {
+          this.syncError = false;
+          try { this.cd.detectChanges(); } catch (e) {}
+        }, 3000);
+      }
+    );
+  }
+
+  cancelExistingRecord(): void {
+    this.showDuplicateDateModal = false;
+    this.duplicateDateInfo = null;
   }
 
 openStatusDropdown: number | null = null;

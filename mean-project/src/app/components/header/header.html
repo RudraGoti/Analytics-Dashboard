@@ -14,15 +14,20 @@
 
     <!-- DATE -->
     <div class="header-box">
+      <label class="header-date-label" for="app-selected-date">
+        <span class="material-icons">
+          calendar_today
+        </span>
+      </label>
 
-      <span class="material-icons">
-        calendar_today
-      </span>
-
-      <span>
-        {{ currentDate }}
-      </span>
-
+      <input
+        id="app-selected-date"
+        class="header-date-input"
+        type="date"
+        [(ngModel)]="selectedDate"
+        (ngModelChange)="setSelectedDate($event)"
+        aria-label="Select report date"
+      />
     </div>
 
     <!-- ICONS -->

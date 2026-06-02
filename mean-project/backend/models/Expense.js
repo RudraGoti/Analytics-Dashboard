@@ -2,6 +2,12 @@ const mongoose = require('mongoose');
 
 const expenseSchema = new mongoose.Schema({
 
+  date: {
+    type: String,
+    required: true,
+    unique: true
+  },
+
   counter: {
     type: Number,
     required: true

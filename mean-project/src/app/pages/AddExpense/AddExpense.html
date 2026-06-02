@@ -253,6 +253,22 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" *ngIf="showDuplicateDateModal">
+    <div class="modal-panel">
+      <h2>Existing record found</h2>
+      <p>A document already exists for <strong>{{ selectedDate }}</strong>. You can append new expenses to the existing record or cancel.</p>
+      <div class="modal-summary">
+        <div><strong>{{ duplicateDateInfo?.expenses?.length || 0 }}</strong> existing expense(s)</div>
+        <div>Current counter: <strong>₹ {{ duplicateDateInfo?.counter || 0 }}</strong></div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn modal-confirm" type="button" (click)="replaceExistingRecord()">Replace whole record</button>
+        <button class="modal-btn modal-confirm" type="button" (click)="appendToExistingRecord()">Append new expense(s)</button>
+        <button class="modal-btn modal-cancel" type="button" (click)="cancelExistingRecord()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Footer -->
   <div class="footer-notice">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#16a34a" stroke-width="2"/><path d="M8 12l3 3 5-5" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>

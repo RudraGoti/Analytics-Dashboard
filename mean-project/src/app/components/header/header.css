@@ -73,6 +73,28 @@
   color:#374151;
 }
 
+.header-date-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.header-date-input {
+  border: none;
+  background: transparent;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+  width: 150px;
+  min-width: 120px;
+  outline: none;
+}
+
+.header-date-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.3);
+}
+
 /* RIGHT SIDE ICONS */
 .header-icon{
   font-size:22px;

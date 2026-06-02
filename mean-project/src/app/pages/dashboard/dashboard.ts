@@ -1,12 +1,76 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ExpenseService } from '../../services/expense.service';
+import { DateService } from '../../services/date.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [],
+  imports: [CommonModule],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css']
 })
-export class Dashboard {
+export class Dashboard implements OnInit, OnDestroy {
 
+  selectedDate: string = '';
+  selectedDateDisplay: string = '';
+  counter: number = 0;
+  totalExpenses: number = 0;
+  expenseCount: number = 0;
+  categoryCount: number = 0;
+  recordFound = false;
+
+  private dateSubscription = new Subscription();
+
+  constructor(
+    private expenseService: ExpenseService,
+    private dateService: DateService
+  ) {}
+
+  ngOnInit(): void {
+    this.selectedDate = this.dateService.selectedDate$.getValue();
+    this.selectedDateDisplay = this.formatDateLabel(this.selectedDate);
+    this.loadRecord(this.selectedDate);
+
+    this.dateSubscription = this.dateService.selectedDate$.subscribe((date) => {
+      this.selectedDate = date;
+      this.selectedDateDisplay = this.formatDateLabel(date);
+      this.loadRecord(date);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.dateSubscription.unsubscribe();
+  }
+
+  private loadRecord(date: string): void {
+    this.expenseService.getExpenseByDate(date).subscribe((record) => {
+      if (record) {
+        this.recordFound = true;
+        this.counter = record.counter || 0;
+        this.expenseCount = record.expenses?.length || 0;
+        this.totalExpenses = (record.expenses || []).reduce(
+          (sum: number, expense: any) => sum + Number(expense.amount || 0),
+          0
+        );
+        this.categoryCount = new Set((record.expenses || []).map((e: any) => e.category)).size;
+      } else {
+        this.recordFound = false;
+        this.counter = 0;
+        this.totalExpenses = 0;
+        this.expenseCount = 0;
+        this.categoryCount = 0;
+      }
+    });
+  }
+
+  private formatDateLabel(date: string): string {
+    if (!date) return 'selected date';
+    return new Date(date).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  }
 }

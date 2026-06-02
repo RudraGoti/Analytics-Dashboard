@@ -2,9 +2,9 @@
 
   <div class="dash-card card-1">
     <div class="card-left">
-      <div class="card-title">Today's Counter</div>
-      <div class="card-amount">12</div>
-      <div class="card-entries">3 entries today</div>
+      <div class="card-title">Counter</div>
+      <div class="card-amount">₹ {{ counter | number:'1.0-0' }}</div>
+      <div class="card-entries">{{ expenseCount }} entries</div>
     </div>
 
     <div class="card-right">
@@ -14,9 +14,9 @@
 
   <div class="dash-card card-2">
     <div class="card-left">
-      <div class="card-title">Today's Expense</div>
-      <div class="card-amount">₹1,250</div>
-      <div class="card-entries">5 bills added</div>
+      <div class="card-title">Total Expense</div>
+      <div class="card-amount">₹ {{ totalExpenses | number:'1.0-0' }}</div>
+      <div class="card-entries">{{ expenseCount }} transaction(s)</div>
     </div>
 
     <div class="card-right">
@@ -26,9 +26,9 @@
 
   <div class="dash-card card-3">
     <div class="card-left">
-      <div class="card-title">This Month Expense</div>
-      <div class="card-amount">₹18,450</div>
-      <div class="card-entries">42 transactions</div>
+      <div class="card-title">Transactions</div>
+      <div class="card-amount">{{ expenseCount }}</div>
+      <div class="card-entries">Entries recorded</div>
     </div>
 
     <div class="card-right">
@@ -38,8 +38,8 @@
 
   <div class="dash-card card-4">
     <div class="card-left">
-      <div class="card-title">Total Categories</div>
-      <div class="card-amount">8</div>
+      <div class="card-title">Categories Used</div>
+      <div class="card-amount">{{ categoryCount }}</div>
       <div class="card-entries">Active categories</div>
     </div>
 

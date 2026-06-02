@@ -35,9 +35,61 @@ app.post('/api/expenses', async (req, res) => {
     console.log(req.body);
     console.log('====================');
 
+    const { date, counter, expenses, action } = req.body;
+
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        error: 'Date is required for expense records.'
+      });
+    }
+
+    const existingRecord = await Expense.findOne({ date });
+
+    if (existingRecord) {
+      if (action === 'append') {
+        const updatedRecord = await Expense.findOneAndUpdate(
+          { date },
+          {
+            $push: { expenses: { $each: expenses } },
+            $set: { counter }
+          },
+          { new: true }
+        );
+
+        return res.status(200).json({
+          success: true,
+          data: updatedRecord
+        });
+      }
+
+      if (action === 'replace') {
+        const updatedRecord = await Expense.findOneAndUpdate(
+          { date },
+          {
+            $set: { counter, expenses }
+          },
+          { new: true }
+        );
+
+        return res.status(200).json({
+          success: true,
+          data: updatedRecord
+        });
+      }
+
+      return res.status(409).json({
+        success: false,
+        error: 'A record for this date already exists.',
+        conflict: true,
+        data: existingRecord
+      });
+    }
+
     const record = new Expense({
-      counter: req.body.counter,
-      expenses: req.body.expenses
+      date,
+      counter,
+      expenses
     });
 
     const savedRecord = await record.save();
@@ -61,12 +113,18 @@ app.post('/api/expenses', async (req, res) => {
 });
 
 // -----------------------------------
-// GET - Fetch All Expenses
+// GET - Fetch All Expenses or Fetch by Date
 // -----------------------------------
 
 app.get('/api/expenses', async (req, res) => {
 
   try {
+    const { date } = req.query;
+
+    if (date) {
+      const record = await Expense.findOne({ date });
+      return res.status(200).json(record || null);
+    }
 
     const records = await Expense.find()
       .sort({ createdAt: -1 });
