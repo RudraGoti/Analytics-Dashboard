@@ -13,13 +13,17 @@ body {
 }
 
 .sidebar {
-  position: relativre;
-  width:270px;
-  margin: 0px;
+  position: relative;
+  width: 270px;
+  margin: 0;
   border-radius: 16px;
   background: #151A2D;
   height: 100%;
+  overflow: hidden;
   transition: all 0.4s ease;
+
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar.collapsed {
@@ -80,6 +84,13 @@ body {
 
 .sidebar.collapsed .sidebar-header .toggler span {
   transform: rotate(180deg);
+}
+
+/* NAVIGATION AREA */
+.sidebar-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar-nav .nav-list {
@@ -157,12 +168,15 @@ body {
   transition: all 0.4s ease;
 }
 
+/* PROFILE + LOGOUT */
 .sidebar-nav .secondary-nav {
-  position: absolute;
-  bottom: 30px;
+  margin-top: auto;
+  padding: 0 15px 20px;
   width: 100%;
+  background: transparent;
 }
 
+/* MOBILE */
 @media (max-width: 1024px) {
 
   .sidebar {
@@ -189,11 +203,11 @@ body {
   }
 
   .sidebar-header .header-logo {
-  color: white;
-  font-size: 1.3rem;
-  font-weight: 600;
-  text-decoration: none;
-}
+    color: white;
+    font-size: 1.3rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
 
   .sidebar-header .sidebar-toggler,
   .sidebar-nav .nav-item:hover .nav-tooltip {
@@ -226,20 +240,16 @@ body {
 
   .sidebar-nav .secondary-nav {
     position: relative;
-    bottom: 0;
-    margin: 40px 0 30px;
+    margin-top: 40px;
+    padding-bottom: 20px;
   }
 }
 
-  .logo-text {
+.logo-text {
   color: white;
   text-decoration: none;
   font-size: 1.3rem;
   font-weight: 600;
-}
-
-  .material-icons {
-  font-size: 24px;
 }
 
 .material-icons {
@@ -255,14 +265,4 @@ body {
 
 .nav-icon {
   font-size: 24px !important;
-}
-
-/* FULL HEIGHT INSIDE CONTAINER */
-.sidebar{
-  overflow: hidden;
-}
-
-/* SMOOTH CONTAINER FIT */
-.sidebar.collapsed{
-  width: 85px;
 }

@@ -12,22 +12,58 @@
   <!-- RIGHT -->
   <div class="header-right">
 
-    <!-- DATE -->
-    <div class="header-box">
-      <label class="header-date-label" for="app-selected-date">
-        <span class="material-icons">
-          calendar_today
-        </span>
-      </label>
+    <!-- DATE PICKER -->
+    <div class="date-picker-container">
+      <div class="date-display" (click)="toggleCalendar()">
 
-      <input
-        id="app-selected-date"
-        class="header-date-input"
-        type="date"
-        [(ngModel)]="selectedDate"
-        (ngModelChange)="setSelectedDate($event)"
-        aria-label="Select report date"
-      />
+  <span class="material-icons calendar-icon-big">
+    calendar_month
+  </span>
+
+  <span class="selected-date">
+    {{ selectedDate | date:'dd MMMM yyyy' }}
+  </span>
+
+</div>
+
+      <!-- Calendar Backdrop -->
+      <div class="calendar-backdrop" *ngIf="showCalendar" (click)="showCalendar = false"></div>
+
+      <!-- Calendar Popup -->
+      <div class="calendar-popup" *ngIf="showCalendar">
+        <!-- Calendar Header -->
+        <div class="calendar-header">
+          <button class="calendar-nav-btn" (click)="previousMonth()" type="button">
+            <span class="material-icons">chevron_left</span>
+          </button>
+          <div class="calendar-month-year">
+            {{ currentMonth | date:'MMMM yyyy' }}
+          </div>
+          <button class="calendar-nav-btn" (click)="nextMonth()" type="button">
+            <span class="material-icons">chevron_right</span>
+          </button>
+        </div>
+
+        <!-- Days of Week -->
+        <div class="calendar-weekdays">
+          <div class="weekday" *ngFor="let day of weekDays">{{ day }}</div>
+        </div>
+
+        <!-- Calendar Days -->
+        <div class="calendar-days">
+          <button
+            *ngFor="let date of calendarDates"
+            class="calendar-day"
+            [class.other-month]="!isCurrentMonth(date)"
+            [class.selected]="isSelectedDate(date)"
+            [class.today]="isToday(date)"
+            (click)="selectDate(date)"
+            type="button"
+          >
+            {{ date.getDate() }}
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- ICONS -->
