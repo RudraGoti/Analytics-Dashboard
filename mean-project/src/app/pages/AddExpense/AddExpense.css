@@ -85,15 +85,29 @@
 }
 
 /* ---- Counter ---- */
+.counter-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+}
+
+.counter-card .card-title {
+  margin-bottom: 0;
+}
+
 .counter-input-wrap {
   position: relative;
   display: inline-flex;
   align-items: center;
+  width: 100%;
+  max-width: 240px;
 }
 
 .date-card .tbl-input {
   width: 100%;
-  max-width: 240px;
+  max-width: 220px;
 }
 
 .currency-symbol {
@@ -116,6 +130,17 @@
   background: #fff;
   outline: none;
   transition: border-color .2s;
+}
+
+@media (max-width: 640px) {
+  .counter-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .counter-input-wrap {
+    max-width: 100%;
+  }
 }
 
 .counter-input:focus { border-color: #2563eb; }
@@ -379,10 +404,11 @@
 /* ---- Summary ---- */
 .summary-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr auto;
-  gap: 16px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
   align-items: stretch;
+  max-width: 1120px;
 }
 
 .summary-card {
@@ -390,7 +416,7 @@
   border-radius: 12px;
   box-shadow: 0 1px 4px rgba(0,0,0,.07), 0 4px 16px rgba(0,0,0,.04);
   border: 1px solid #e2e6ef;
-  padding: 22px 24px;
+  padding: 18px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -432,9 +458,9 @@
   color: #fff;
   border: none;
   border-radius: 12px;
-  padding: 0 28px;
+  padding: 0 24px;
   height: 100%;
-  min-height: 90px;
+  min-height: 76px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -443,7 +469,7 @@
   white-space: nowrap;
   transition: background .15s, transform .1s, box-shadow .15s;
   box-shadow: 0 4px 14px rgba(37,99,235,.3);
-  min-width: 180px;
+  min-width: 160px;
   width: 100%;
 }
 

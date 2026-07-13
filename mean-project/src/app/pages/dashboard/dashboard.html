@@ -1,51 +1,112 @@
 <div class="dashboard-container">
 
-  <div class="dash-card card-1">
-    <div class="card-left">
-      <div class="card-title">Counter</div>
-      <div class="card-amount">₹ {{ counter | number:'1.0-0' }}</div>
-      <div class="card-entries">{{ expenseCount }} entries</div>
+  <div class="summary-grid">
+    <div class="dash-card card-1">
+      <div class="card-left">
+        <div class="card-title">Counter</div>
+        <div class="card-amount">₹ {{ counter | number:'1.0-0' }}</div>
+        <div class="card-entries">{{ expenseCount }} entries</div>
+      </div>
+      <div class="card-right">
+        <span class="material-icons">today</span>
+      </div>
     </div>
 
-    <div class="card-right">
-      <span class="material-icons">today</span>
-    </div>
-  </div>
-
-  <div class="dash-card card-2">
-    <div class="card-left">
-      <div class="card-title">Total Expense</div>
-      <div class="card-amount">₹ {{ totalExpenses | number:'1.0-0' }}</div>
-      <div class="card-entries">{{ expenseCount }} transaction(s)</div>
-    </div>
-
-    <div class="card-right">
-      <span class="material-icons">payments</span>
-    </div>
-  </div>
-
-  <div class="dash-card card-3">
-    <div class="card-left">
-      <div class="card-title">Transactions</div>
-      <div class="card-amount">{{ expenseCount }}</div>
-      <div class="card-entries">Entries recorded</div>
+    <div class="dash-card card-2">
+      <div class="card-left">
+        <div class="card-title">Total Expense</div>
+        <div class="card-amount">₹ {{ totalExpenses | number:'1.0-0' }}</div>
+        <div class="card-entries">{{ expenseCount }} transaction(s)</div>
+      </div>
+      <div class="card-right">
+        <span class="material-icons">payments</span>
+      </div>
     </div>
 
-    <div class="card-right">
-      <span class="material-icons">calendar_month</span>
+    <div class="dash-card card-3">
+      <div class="card-left">
+        <div class="card-title">Transactions</div>
+        <div class="card-amount">{{ expenseCount }}</div>
+        <div class="card-entries">Entries recorded</div>
+      </div>
+      <div class="card-right">
+        <span class="material-icons">calendar_month</span>
+      </div>
     </div>
-  </div>
 
-  <div class="dash-card card-4">
-    <div class="card-left">
-      <div class="card-title">Categories Used</div>
-      <div class="card-amount">{{ categoryCount }}</div>
-      <div class="card-entries">Active categories</div>
-    </div>
-
-    <div class="card-right">
-      <span class="material-icons">category</span>
+    <div class="dash-card card-4">
+      <div class="card-left">
+        <div class="card-title">Categories Used</div>
+        <div class="card-amount">{{ categoryCount }}</div>
+        <div class="card-entries">Active categories</div>
+      </div>
+      <div class="card-right">
+        <span class="material-icons">category</span>
+      </div>
     </div>
   </div>
 
+  <div class="dashboard-main">
+    <section class="panel chart-panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Category Pie Chart</div>
+        </div>
+      </div>
+
+      <div class="chart-content">
+        <div class="pie-chart" [style.background]="pieGradient">
+          <div class="pie-center">
+            <span>{{ categoryCount }}</span>
+            <small>Categories</small>
+          </div>
+        </div>
+        <div class="chart-legend">
+          <div class="legend-item" *ngFor="let category of categorySummary">
+            <span class="legend-color" [style.background]="category.color"></span>
+            <div>
+              <div class="legend-name">{{ category.name }}</div>
+              <div class="legend-value">{{ category.count }} entries</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel entries-panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Bill Entries</div>
+        </div>
+      </div>
+
+      <div class="entries-table-wrap">
+        <table class="entries-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let expense of expenses; let i = index" [hidden]="i >= 5">
+              <td>{{ expense.title }}</td>
+              <td>{{ expense.category }}</td>
+              <td>₹ {{ expense.amount | number:'1.0-0' }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="getStatusBadgeClass(expense)">
+                  {{ getStatusBadgeText(expense) }}
+                </span>
+              </td>
+            </tr>
+            <tr *ngIf="!expenses || expenses.length === 0">
+              <td colspan="4" class="empty-state">No entries found for this date.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
 </div>
