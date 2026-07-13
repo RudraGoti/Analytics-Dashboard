@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ExpenseService } from '../../services/expense.service';
 import { DateService } from '../../services/date.service';
@@ -26,6 +26,7 @@ export class Dashboard implements OnInit, OnDestroy {
   private dateSubscription = new Subscription();
 
   constructor(
+    private cd: ChangeDetectorRef,
     private expenseService: ExpenseService,
     private dateService: DateService
   ) {}
@@ -81,6 +82,7 @@ export class Dashboard implements OnInit, OnDestroy {
             )
           ).size;
 
+          try { this.cd.detectChanges(); } catch (e) {}
         } else {
 
           this.recordFound = false;
@@ -89,6 +91,7 @@ export class Dashboard implements OnInit, OnDestroy {
           this.totalExpenses = 0;
           this.expenseCount = 0;
           this.categoryCount = 0;
+          try { this.cd.detectChanges(); } catch (e) {}
         }
       },
 
@@ -102,6 +105,7 @@ export class Dashboard implements OnInit, OnDestroy {
         this.totalExpenses = 0;
         this.expenseCount = 0;
         this.categoryCount = 0;
+        try { this.cd.detectChanges(); } catch (e) {}
       }
     });
   }

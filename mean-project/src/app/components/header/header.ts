@@ -109,6 +109,7 @@ export class HeaderComponent implements OnInit, AfterViewInit {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const dateString = `${year}-${month}-${day}`;
+    console.log('Header: selecting date', dateString);
     this.dateService.selectedDate$.next(dateString);
     this.showCalendar = false;
   }

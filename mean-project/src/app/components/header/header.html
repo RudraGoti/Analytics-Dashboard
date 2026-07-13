@@ -14,7 +14,7 @@
 
     <!-- DATE PICKER -->
     <div class="date-picker-container">
-      <div class="date-display" (click)="toggleCalendar()">
+      <div class="date-display" (click)="toggleCalendar(); $event.stopPropagation()">
 
   <span class="material-icons calendar-icon-big">
     calendar_month
@@ -57,7 +57,7 @@
             [class.other-month]="!isCurrentMonth(date)"
             [class.selected]="isSelectedDate(date)"
             [class.today]="isToday(date)"
-            (click)="selectDate(date)"
+            (click)="$event.stopPropagation(); selectDate(date)"
             type="button"
           >
             {{ date.getDate() }}

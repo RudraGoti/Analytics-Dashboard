@@ -8,7 +8,7 @@
   justify-content:space-between;
  
   padding:0 28px;
-
+  
   background: #151A2D;
   
   font-family:"Poppins", sans-serif;
@@ -44,7 +44,7 @@
   color: #1b2545;
 
   padding: 10px 12px;
-  border-radius: 0px 10px 0px 10px;
+  border-radius: 0px 8px 0px 8px;
 
   cursor: pointer;
   min-width: 140px;
