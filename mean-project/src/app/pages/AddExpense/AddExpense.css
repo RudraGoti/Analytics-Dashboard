@@ -175,6 +175,7 @@
 .col-status  { min-width: 120px; }
 .col-mode    { min-width: 140px; }
 .col-desc    { min-width: 160px; }
+.col-bill    { min-width: 110px; }
 .col-actions { width: 44px; }
 
 /* ---- Shared input ---- */
@@ -381,6 +382,58 @@
 
 .del-btn:hover { background: #b91c1c; transform: scale(1.08); }
 
+/* ---- Bill Upload ---- */
+.bill-upload-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bill-file-input { display: none; }
+
+.bill-btn {
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 1.5px solid #7dd3fc;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: "Poppins", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all .15s;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.bill-btn:hover { background: #e0f2fe; border-color: #06b6d4; }
+.bill-btn.has-file { background: #dbeafe; border-color: #2563eb; color: #1e40af; }
+.bill-btn.has-file:hover { background: #bfdbfe; border-color: #2563eb; }
+
+.bill-text { font-size: 0.75rem; }
+
+.bill-remove-btn {
+  background: transparent;
+  color: #dc2626;
+  border: 1.5px solid #fecaca;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+
+.bill-remove-btn:hover { background: #fee2e2; border-color: #dc2626; }
+
 /* ---- Add Expense button ---- */
 .add-btn {
   margin-top: 16px;
@@ -511,73 +564,6 @@
 @media (max-width: 540px) {
   .summary-row { grid-template-columns: 1fr; }
   .page-wrapper { padding: 20px 14px 48px; }
-}
-
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  z-index: 100000;
-}
-
-.modal-panel {
-  width: min(520px, 100%);
-  background: #fff;
-  border-radius: 20px;
-  padding: 26px;
-  box-shadow: 0 20px 70px rgba(15, 23, 42, 0.24);
-  border: 1px solid #e2e6ef;
-  z-index: 100001;
-}
-
-.modal-panel h2 {
-  margin-bottom: 12px;
-  font-size: 1.1rem;
-  color: #111827;
-}
-
-.modal-panel p {
-  color: #4b5563;
-  line-height: 1.6;
-  margin-bottom: 20px;
-}
-
-.modal-summary {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 22px;
-  color: #1f2937;
-}
-
-.modal-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.modal-btn {
-  border: none;
-  border-radius: 10px;
-  padding: 12px 18px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.modal-confirm {
-  background: #2563eb;
-  color: #fff;
-}
-
-.modal-cancel {
-  background: #f3f4f6;
-  color: #111827;
 }
 
 .col-status .cat-btn,

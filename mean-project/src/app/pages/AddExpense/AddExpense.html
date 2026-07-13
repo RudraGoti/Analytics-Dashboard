@@ -26,11 +26,19 @@
             <th class="col-status">Status</th>
             <th class="col-mode">Mode</th>
             <th class="col-desc">Description</th>
+            <th class="col-bill">Bill</th>
             <th class="col-actions"></th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let expense of expenses; let i = index" class="expense-row">
+          <!-- Old Entries Section -->
+          <ng-container *ngIf="getOldExpenses().length > 0">
+            <tr class="separator-row">
+              <td colspan="8" class="separator-label">
+                <span>Previous Entries</span>
+              </td>
+            </tr>
+            <tr *ngFor="let expense of getOldExpenses(); let i = index" class="expense-row old-entry">
 
             <!-- Title -->
             <td class="col-title">
@@ -48,18 +56,18 @@
                 <button
                   type="button"
                   class="cat-btn"
-                  [class.open]="openDropdown === i"
-                  (click)="toggleDropdown(i)"
+                  [class.open]="openDropdown === getExpenseIndex(expense)"
+                  (click)="toggleDropdown(getExpenseIndex(expense))"
                 >
                   <span class="cat-icon-wrap">{{ getCategoryIcon(expense.category) }}</span>
                   <span class="cat-name">{{ expense.category || 'Select…' }}</span>
                   <svg class="chevron" width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="currentColor"/></svg>
                 </button>
-                <div class="cat-dropdown" [class.open]="openDropdown === i">
+                <div class="cat-dropdown" [class.open]="openDropdown === getExpenseIndex(expense)">
                   <div
                     *ngFor="let cat of categories"
                     class="cat-option"
-                    (click)="selectCategory(i, cat.name)"
+                    (click)="selectCategory(getExpenseIndex(expense), cat.name)"
                   >
                     <span class="cat-icon-wrap">{{ cat.icon }}</span>
                     <span>{{ cat.name }}</span>
@@ -89,8 +97,8 @@
                 <button
                   type="button"
                   class="cat-btn"
-                  [class.open]="openStatusDropdown === i"
-                  (click)="toggleStatusDropdown(i)"
+                  [class.open]="openStatusDropdown === getExpenseIndex(expense)"
+                  (click)="toggleStatusDropdown(getExpenseIndex(expense))"
                 >
                   <span class="cat-name">
                     {{ expense.status || 'Select Status' }}
@@ -101,18 +109,18 @@
                   </svg>
                 </button>
 
-                <div class="cat-dropdown" [class.open]="openStatusDropdown === i">
+                <div class="cat-dropdown" [class.open]="openStatusDropdown === getExpenseIndex(expense)">
 
                   <div
                     class="cat-option"
-                    (click)="selectStatus(i, 'Paid')"
+                    (click)="selectStatus(getExpenseIndex(expense), 'Paid')"
                   >
                     Paid
                   </div>
 
                   <div
                     class="cat-option"
-                    (click)="selectStatus(i, 'Pending')"
+                    (click)="selectStatus(getExpenseIndex(expense), 'Pending')"
                   >
                     Pending
                   </div>
@@ -129,8 +137,8 @@
                 <button
                   type="button"
                   class="cat-btn"
-                  [class.open]="openModeDropdown === i"
-                  (click)="toggleModeDropdown(i)"
+                  [class.open]="openModeDropdown === getExpenseIndex(expense)"
+                  (click)="toggleModeDropdown(getExpenseIndex(expense))"
                 >
                   <span class="cat-name">
                     {{ expense.mode || 'Select Mode' }}
@@ -141,32 +149,32 @@
                   </svg>
                 </button>
 
-                <div class="cat-dropdown" [class.open]="openModeDropdown === i">
+                <div class="cat-dropdown" [class.open]="openModeDropdown === getExpenseIndex(expense)">
 
                   <div
                     class="cat-option"
-                    (click)="selectMode(i, 'Cash')"
+                    (click)="selectMode(getExpenseIndex(expense), 'Cash')"
                   >
                     Cash
                   </div>
 
                   <div
                     class="cat-option"
-                    (click)="selectMode(i, 'UPI')"
+                    (click)="selectMode(getExpenseIndex(expense), 'UPI')"
                   >
                     UPI
                   </div>
 
                   <div
                     class="cat-option"
-                    (click)="selectMode(i, 'Card')"
+                    (click)="selectMode(getExpenseIndex(expense), 'Card')"
                   >
                     Card
                   </div>
 
                   <div
                     class="cat-option"
-                    (click)="selectMode(i, 'Bank Transfer')"
+                    (click)="selectMode(getExpenseIndex(expense), 'Bank Transfer')"
                   >
                     Bank Transfer
                   </div>
@@ -186,14 +194,262 @@
               />
             </td>
 
+            <!-- Bill Upload -->
+            <td class="col-bill">
+              <div class="bill-upload-wrap">
+                <input
+                  [id]="'bill-upload-' + getExpenseIndex(expense)"
+                  type="file"
+                  class="bill-file-input"
+                  accept=".pdf,.jpg,.jpeg,.png,.gif"
+                  (change)="onBillFileSelected($event, getExpenseIndex(expense))"
+                  style="display: none;"
+                />
+                <button
+                  class="bill-btn"
+                  type="button"
+                  (click)="triggerBillUpload(getExpenseIndex(expense))"
+                  [class.has-file]="expense.billFileName"
+                  title="Upload Bill"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span class="bill-text">{{ expense.billFileName ? 'File' : 'Upload' }}</span>
+                </button>
+                <button
+                  *ngIf="expense.billFileName"
+                  class="bill-remove-btn"
+                  type="button"
+                  (click)="removeBillFile(getExpenseIndex(expense))"
+                  title="Remove Bill"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+
             <!-- Delete -->
             <td class="col-actions">
-              <button class="del-btn" type="button" (click)="removeExpense(i)" title="Remove">
+              <button class="del-btn" type="button" (click)="removeExpense(getExpenseIndex(expense))" title="Remove">
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
               </button>
             </td>
 
           </tr>
+          </ng-container>
+
+          <!-- New Entries Section -->
+          <ng-container *ngIf="getNewExpenses().length > 0">
+            <tr class="separator-row new-entries-separator">
+              <td colspan="8" class="separator-label">
+                <span>New Entries</span>
+              </td>
+            </tr>
+            <tr *ngFor="let expense of getNewExpenses(); let i = index" class="expense-row">
+
+            <!-- Title -->
+            <td class="col-title">
+              <input
+                class="tbl-input"
+                type="text"
+                placeholder="Title"
+                [(ngModel)]="expense.title"
+              />
+            </td>
+
+            <!-- Category -->
+            <td class="col-cat">
+              <div class="cat-wrap">
+                <button
+                  type="button"
+                  class="cat-btn"
+                  [class.open]="openDropdown === getExpenseIndex(expense)"
+                  (click)="toggleDropdown(getExpenseIndex(expense))"
+                >
+                  <span class="cat-icon-wrap">{{ getCategoryIcon(expense.category) }}</span>
+                  <span class="cat-name">{{ expense.category || 'Select…' }}</span>
+                  <svg class="chevron" width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="currentColor"/></svg>
+                </button>
+                <div class="cat-dropdown" [class.open]="openDropdown === getExpenseIndex(expense)">
+                  <div
+                    *ngFor="let cat of categories"
+                    class="cat-option"
+                    (click)="selectCategory(getExpenseIndex(expense), cat.name)"
+                  >
+                    <span class="cat-icon-wrap">{{ cat.icon }}</span>
+                    <span>{{ cat.name }}</span>
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <!-- Amount -->
+            <td class="col-amount">
+              <div class="amount-wrap">
+                <span class="amount-prefix">₹</span>
+                <input
+                  class="tbl-input mono"
+                  type="number"
+                  placeholder="0.00"
+                  [(ngModel)]="expense.amount"
+                  min="0"
+                />
+              </div>
+            </td>
+
+            <!-- Status -->
+            <td class="col-status">
+              <div class="cat-wrap">
+
+                <button
+                  type="button"
+                  class="cat-btn"
+                  [class.open]="openStatusDropdown === getExpenseIndex(expense)"
+                  (click)="toggleStatusDropdown(getExpenseIndex(expense))"
+                >
+                  <span class="cat-name">
+                    {{ expense.status || 'Select Status' }}
+                  </span>
+
+                  <svg class="chevron" width="10" height="6" viewBox="0 0 10 6">
+                    <path d="M0 0l5 6 5-6z" fill="currentColor"/>
+                  </svg>
+                </button>
+
+                <div class="cat-dropdown" [class.open]="openStatusDropdown === getExpenseIndex(expense)">
+
+                  <div
+                    class="cat-option"
+                    (click)="selectStatus(getExpenseIndex(expense), 'Paid')"
+                  >
+                    Paid
+                  </div>
+
+                  <div
+                    class="cat-option"
+                    (click)="selectStatus(getExpenseIndex(expense), 'Pending')"
+                  >
+                    Pending
+                  </div>
+
+                </div>
+
+              </div>
+            </td>
+
+            <!-- Mode -->
+            <td class="col-mode">
+              <div class="cat-wrap">
+
+                <button
+                  type="button"
+                  class="cat-btn"
+                  [class.open]="openModeDropdown === getExpenseIndex(expense)"
+                  (click)="toggleModeDropdown(getExpenseIndex(expense))"
+                >
+                  <span class="cat-name">
+                    {{ expense.mode || 'Select Mode' }}
+                  </span>
+
+                  <svg class="chevron" width="10" height="6" viewBox="0 0 10 6">
+                    <path d="M0 0l5 6 5-6z" fill="currentColor"/>
+                  </svg>
+                </button>
+
+                <div class="cat-dropdown" [class.open]="openModeDropdown === getExpenseIndex(expense)">
+
+                  <div
+                    class="cat-option"
+                    (click)="selectMode(getExpenseIndex(expense), 'Cash')"
+                  >
+                    Cash
+                  </div>
+
+                  <div
+                    class="cat-option"
+                    (click)="selectMode(getExpenseIndex(expense), 'UPI')"
+                  >
+                    UPI
+                  </div>
+
+                  <div
+                    class="cat-option"
+                    (click)="selectMode(getExpenseIndex(expense), 'Card')"
+                  >
+                    Card
+                  </div>
+
+                  <div
+                    class="cat-option"
+                    (click)="selectMode(getExpenseIndex(expense), 'Bank Transfer')"
+                  >
+                    Bank Transfer
+                  </div>
+
+                </div>
+
+              </div>
+            </td>
+
+            <!-- Description -->
+            <td class="col-desc">
+              <input
+                class="tbl-input"
+                type="text"
+                placeholder="Description"
+                [(ngModel)]="expense.description"
+              />
+            </td>
+
+            <!-- Bill Upload -->
+            <td class="col-bill">
+              <div class="bill-upload-wrap">
+                <input
+                  [id]="'bill-upload-' + getExpenseIndex(expense)"
+                  type="file"
+                  class="bill-file-input"
+                  accept=".pdf,.jpg,.jpeg,.png,.gif"
+                  (change)="onBillFileSelected($event, getExpenseIndex(expense))"
+                  style="display: none;"
+                />
+                <button
+                  class="bill-btn"
+                  type="button"
+                  (click)="triggerBillUpload(getExpenseIndex(expense))"
+                  [class.has-file]="expense.billFileName"
+                  title="Upload Bill"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span class="bill-text">{{ expense.billFileName ? 'File' : 'Upload' }}</span>
+                </button>
+                <button
+                  *ngIf="expense.billFileName"
+                  class="bill-remove-btn"
+                  type="button"
+                  (click)="removeBillFile(getExpenseIndex(expense))"
+                  title="Remove Bill"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+
+            <!-- Delete -->
+            <td class="col-actions">
+              <button class="del-btn" type="button" (click)="removeExpense(getExpenseIndex(expense))" title="Remove">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
+            </td>
+
+          </tr>
+          </ng-container>
         </tbody>
       </table>
     </div>
@@ -250,21 +506,5 @@
           Failed — Retry
         </ng-container>
       </button>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" *ngIf="showDuplicateDateModal">
-    <div class="modal-panel">
-      <h2>Existing record found</h2>
-      <p>A document already exists for <strong>{{ selectedDate }}</strong>. You can append new expenses to the existing record or cancel.</p>
-      <div class="modal-summary">
-        <div><strong>{{ duplicateDateInfo?.expenses?.length || 0 }}</strong> existing expense(s)</div>
-        <div>Current counter: <strong>₹ {{ duplicateDateInfo?.counter || 0 }}</strong></div>
-      </div>
-      <div class="modal-actions">
-        <button class="modal-btn modal-confirm" type="button" (click)="replaceExistingRecord()">Replace whole record</button>
-        <button class="modal-btn modal-confirm" type="button" (click)="appendToExistingRecord()">Append new expense(s)</button>
-        <button class="modal-btn modal-cancel" type="button" (click)="cancelExistingRecord()">Cancel</button>
-      </div>
     </div>
   </div>

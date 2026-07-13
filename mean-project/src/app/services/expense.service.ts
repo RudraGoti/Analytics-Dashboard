@@ -9,6 +9,9 @@ export interface Expense {
   status: string;
   mode: string;
   description: string;
+  billFile?: File | null;
+  billFileName?: string;
+  isOldEntry?: boolean;
 }
 
 export interface DailyExpensePayload {
@@ -43,4 +46,17 @@ export class ExpenseService {
       params: { date }
     });
   }
+
+  // Update expenses (used after conflict review, sends PUT to /:date)
+  updateExpenses(
+    date: string,
+    data: { counter: number; expenses: Expense[] }
+  ): Observable<any> {
+      return this.http.post<any>(this.apiUrl, {
+        date,
+        counter: data.counter,
+        expenses: data.expenses,
+        action: 'replace'
+      });
+    }
 }
