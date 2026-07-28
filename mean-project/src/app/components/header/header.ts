@@ -1,9 +1,10 @@
-import { Component, Input, OnInit, AfterViewInit, HostListener } from '@angular/core';
+import { Component, Input, OnInit, AfterViewInit, OnDestroy, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { DateService } from '../../services/date.service';
+import { Subscription } from 'rxjs';
+import { DateRange, DateService } from '../../services/date.service';
 
 @Component({
   selector: 'app-header',
@@ -12,20 +13,26 @@ import { DateService } from '../../services/date.service';
   templateUrl: './header.html',
   styleUrls: ['./header.css']
 })
-export class HeaderComponent implements OnInit, AfterViewInit {
+export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @Input() isSidebarCollapsed = false;
 
   pageTitle = 'Dashboard';
   currentDate: string;
-  selectedDate: string;
+  selectedDate: string = '';
+  selectedRange: DateRange = { from: '', to: '' };
+  fromDate: string = '';
+  toDate: string = '';
   showCalendar: boolean = false;
+  isRangeMode: boolean = false;
   currentMonth: Date = new Date();
   calendarDates: Date[] = [];
   weekDays: string[] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  constructor(private router: Router, private dateService: DateService) {
+  private dateSubscription = new Subscription();
+  private rangeSubscription = new Subscription();
 
+  constructor(private router: Router, private dateService: DateService) {
     const today = new Date();
 
     this.currentDate = today.toLocaleDateString(
@@ -37,11 +44,21 @@ export class HeaderComponent implements OnInit, AfterViewInit {
       }
     );
 
+    const initialRange = this.dateService.selectedDateRange$.getValue();
+    this.selectedRange = initialRange;
+    this.fromDate = initialRange.from;
+    this.toDate = initialRange.to;
     this.selectedDate = this.dateService.selectedDate$.getValue();
   }
 
   ngOnInit(): void {
-    this.dateService.selectedDate$.subscribe((date) => {
+    this.rangeSubscription = this.dateService.selectedDateRange$.subscribe((range) => {
+      this.selectedRange = range;
+      this.fromDate = range.from;
+      this.toDate = range.to;
+    });
+
+    this.dateSubscription = this.dateService.selectedDate$.subscribe((date) => {
       this.selectedDate = date;
     });
 
@@ -54,16 +71,40 @@ export class HeaderComponent implements OnInit, AfterViewInit {
       });
   }
 
-  setSelectedDate(value: string): void {
-    this.dateService.selectedDate$.next(value);
-  }
-
   toggleCalendar(): void {
     this.showCalendar = !this.showCalendar;
     if (this.showCalendar) {
       this.generateCalendarDates();
       setTimeout(() => this.updateCalendarPosition(), 0);
     }
+  }
+
+  applyDateRange(): void {
+    this.dateService.setDateRange(this.fromDate, this.toDate);
+    this.showCalendar = false;
+  }
+
+  setSingleDate(value: string): void {
+    this.dateService.setSingleDate(value);
+    this.showCalendar = false;
+  }
+
+  formatRangeLabel(range: DateRange): string {
+    if (!range.from || !range.to) {
+      return 'Select a date range';
+    }
+
+    const fromLabel = new Date(range.from).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short'
+    });
+    const toLabel = new Date(range.to).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+
+    return range.from === range.to ? toLabel : `${fromLabel} — ${toLabel}`;
   }
 
   generateCalendarDates(): void {
@@ -110,8 +151,14 @@ export class HeaderComponent implements OnInit, AfterViewInit {
     const day = String(date.getDate()).padStart(2, '0');
     const dateString = `${year}-${month}-${day}`;
     console.log('Header: selecting date', dateString);
-    this.dateService.selectedDate$.next(dateString);
-    this.showCalendar = false;
+
+    if (this.isRangeMode) {
+      this.fromDate = dateString;
+      this.toDate = dateString;
+      this.applyDateRange();
+    } else {
+      this.setSingleDate(dateString);
+    }
   }
 
   isCurrentMonth(date: Date): boolean {
@@ -119,11 +166,18 @@ export class HeaderComponent implements OnInit, AfterViewInit {
   }
 
   isSelectedDate(date: Date): boolean {
+    const current = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+    if (this.isRangeMode) {
+      if (!this.selectedRange.from || !this.selectedRange.to) return false;
+      const selectedFrom = new Date(this.selectedRange.from);
+      const selectedTo = new Date(this.selectedRange.to);
+      return current >= selectedFrom && current <= selectedTo;
+    }
+
     if (!this.selectedDate) return false;
     const selected = new Date(this.selectedDate);
-    return date.getDate() === selected.getDate() &&
-           date.getMonth() === selected.getMonth() &&
-           date.getFullYear() === selected.getFullYear();
+    return current.getTime() === new Date(selected.getFullYear(), selected.getMonth(), selected.getDate()).getTime();
   }
 
   isToday(date: Date): boolean {
@@ -153,6 +207,11 @@ export class HeaderComponent implements OnInit, AfterViewInit {
     }
   }
 
+  ngOnDestroy(): void {
+    this.rangeSubscription.unsubscribe();
+    this.dateSubscription.unsubscribe();
+  }
+
   private updateCalendarPosition(): void {
     const header = document.querySelector('.header');
     const popup = document.querySelector('.calendar-popup');
@@ -165,6 +224,7 @@ export class HeaderComponent implements OnInit, AfterViewInit {
   updateTitle(url: string) {
 
     const route = url.split('/')[1];
+    this.isRangeMode = route === 'analytics';
 
     switch(route) {
 

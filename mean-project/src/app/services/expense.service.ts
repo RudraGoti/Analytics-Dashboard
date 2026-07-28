@@ -27,7 +27,7 @@ export interface DailyExpensePayload {
 
 export class ExpenseService {
 
-  private apiUrl = 'https://probable-adventure-5gjr5p6v64xr2v695-3000.app.github.dev/api/expenses';
+  private apiUrl = 'http://localhost:3000/api/expenses';
 
   constructor(private http: HttpClient) {}
 
@@ -44,6 +44,12 @@ export class ExpenseService {
   getExpenseByDate(date: string): Observable<any> {
     return this.http.get<any>(this.apiUrl, {
       params: { date }
+    });
+  }
+
+  getExpensesByDateRange(dateFrom: string, dateTo: string): Observable<any[]> {
+    return this.http.get<any[]>(this.apiUrl, {
+      params: { dateFrom, dateTo }
     });
   }
 

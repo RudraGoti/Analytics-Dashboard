@@ -111,9 +111,64 @@
   border-radius: 16px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08);
   padding: 20px;
-  width: 320px;
+  width: 360px;
   z-index: 9999;
   animation: slideDown 0.2s ease-out;
+}
+
+.range-popup-header {
+  margin-bottom: 18px;
+}
+
+.range-popup-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1d2e;
+}
+
+.range-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.range-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.range-field span {
+  font-size: 12px;
+  color: #475569;
+}
+
+.range-field input {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  padding: 10px 12px;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.apply-btn {
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 16px;
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.apply-btn:hover {
+  background: #1d4ed8;
 }
 
 @keyframes slideDown {

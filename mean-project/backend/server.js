@@ -119,11 +119,22 @@ app.post('/api/expenses', async (req, res) => {
 app.get('/api/expenses', async (req, res) => {
 
   try {
-    const { date } = req.query;
+    const { date, dateFrom, dateTo } = req.query;
 
     if (date) {
       const record = await Expense.findOne({ date });
       return res.status(200).json(record || null);
+    }
+
+    if (dateFrom && dateTo) {
+      const records = await Expense.find({
+        date: {
+          $gte: dateFrom,
+          $lte: dateTo
+        }
+      }).sort({ date: 1 });
+
+      return res.status(200).json(records);
     }
 
     const records = await Expense.find()

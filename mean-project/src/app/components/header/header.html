@@ -15,54 +15,76 @@
     <!-- DATE PICKER -->
     <div class="date-picker-container">
       <div class="date-display" (click)="toggleCalendar(); $event.stopPropagation()">
-
-  <span class="material-icons calendar-icon-big">
-    calendar_month
-  </span>
-
-  <span class="selected-date">
-    {{ selectedDate | date:'dd MMMM yyyy' }}
-  </span>
-
-</div>
+        <span class="material-icons calendar-icon-big">
+          calendar_month
+        </span>
+        <span class="selected-date">
+          <ng-container *ngIf="isRangeMode; else singleDateLabel">
+            {{ formatRangeLabel(selectedRange) }}
+          </ng-container>
+          <ng-template #singleDateLabel>
+            {{ selectedDate | date:'dd MMMM yyyy' }}
+          </ng-template>
+        </span>
+      </div>
 
       <!-- Calendar Backdrop -->
       <div class="calendar-backdrop" *ngIf="showCalendar" (click)="showCalendar = false"></div>
 
-      <!-- Calendar Popup -->
       <div class="calendar-popup" *ngIf="showCalendar">
-        <!-- Calendar Header -->
-        <div class="calendar-header">
-          <button class="calendar-nav-btn" (click)="previousMonth()" type="button">
-            <span class="material-icons">chevron_left</span>
-          </button>
-          <div class="calendar-month-year">
-            {{ currentMonth | date:'MMMM yyyy' }}
+        <ng-container *ngIf="isRangeMode; else singleDatePopup">
+          <div class="range-popup-header">
+            <div class="range-popup-title">Select Date Range</div>
           </div>
-          <button class="calendar-nav-btn" (click)="nextMonth()" type="button">
-            <span class="material-icons">chevron_right</span>
-          </button>
-        </div>
 
-        <!-- Days of Week -->
-        <div class="calendar-weekdays">
-          <div class="weekday" *ngFor="let day of weekDays">{{ day }}</div>
-        </div>
+          <div class="range-inputs">
+            <label class="range-field">
+              <span>From</span>
+              <input type="date" [(ngModel)]="fromDate" />
+            </label>
 
-        <!-- Calendar Days -->
-        <div class="calendar-days">
-          <button
-            *ngFor="let date of calendarDates"
-            class="calendar-day"
-            [class.other-month]="!isCurrentMonth(date)"
-            [class.selected]="isSelectedDate(date)"
-            [class.today]="isToday(date)"
-            (click)="$event.stopPropagation(); selectDate(date)"
-            type="button"
-          >
-            {{ date.getDate() }}
+            <label class="range-field">
+              <span>To</span>
+              <input type="date" [(ngModel)]="toDate" />
+            </label>
+          </div>
+
+          <button class="apply-btn" type="button" (click)="applyDateRange()">
+            Apply Range
           </button>
-        </div>
+        </ng-container>
+
+        <ng-template #singleDatePopup>
+          <div class="calendar-header">
+            <button class="calendar-nav-btn" (click)="previousMonth()" type="button">
+              <span class="material-icons">chevron_left</span>
+            </button>
+            <div class="calendar-month-year">
+              {{ currentMonth | date:'MMMM yyyy' }}
+            </div>
+            <button class="calendar-nav-btn" (click)="nextMonth()" type="button">
+              <span class="material-icons">chevron_right</span>
+            </button>
+          </div>
+
+          <div class="calendar-weekdays">
+            <div class="weekday" *ngFor="let day of weekDays">{{ day }}</div>
+          </div>
+
+          <div class="calendar-days">
+            <button
+              *ngFor="let date of calendarDates"
+              class="calendar-day"
+              [class.other-month]="!isCurrentMonth(date)"
+              [class.selected]="isSelectedDate(date)"
+              [class.today]="isToday(date)"
+              (click)="$event.stopPropagation(); selectDate(date)"
+              type="button"
+            >
+              {{ date.getDate() }}
+            </button>
+          </div>
+        </ng-template>
       </div>
     </div>
 
