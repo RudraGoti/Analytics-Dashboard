@@ -44,4 +44,123 @@
       </div>
     </div>
   </div>
+
+  <div class="dashboard-main">
+    <section class="panel chart-panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Trend Overview</div>
+          <div class="panel-subtitle">Counter, Expense, and In Hand across the selected date range</div>
+        </div>
+        <div class="chart-legend">
+          <div class="legend-item" *ngFor="let series of chartSeries">
+            <span class="legend-color" [style.background]="series.color"></span>
+            <div>
+              <div class="legend-name">{{ series.label }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-panel-body">
+        <ng-container *ngIf="chartRecords.length; else chartEmpty">
+          <div class="chart-canvas" #trendChart>
+            <svg class="line-chart" viewBox="0 0 720 320" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="backgroundGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#eef2ff" stop-opacity="0.65" />
+                <stop offset="100%" stop-color="#ffffff" stop-opacity="0.05" />
+              </linearGradient>
+            </defs>
+
+            <rect x="0" y="0" width="720" height="320" fill="url(#backgroundGradient)" />
+
+            <g *ngFor="let tick of [0, 1, 2, 3, 4]">
+              <line
+                x1="56"
+                [attr.x2]="664"
+                [attr.y1]="(40 + tick * 56)"
+                [attr.y2]="(40 + tick * 56)"
+                stroke="#e5e7eb"
+                stroke-width="1"
+              />
+            </g>
+
+            <g *ngFor="let series of chartSeries">
+              <path
+                class="chart-line"
+                [attr.d]="series.path"
+                [attr.stroke]="series.color"
+                fill="none"
+                stroke-width="3"
+                stroke-linecap="round"
+              />
+              <g *ngFor="let point of series.points">
+                <circle
+                  class="chart-point"
+                  [attr.cx]="point.x"
+                  [attr.cy]="point.y"
+                  r="6"
+                  [attr.fill]="series.color"
+                  stroke="#fff"
+                  stroke-width="2"
+                  (mouseenter)="showTooltip(point, $event)"
+                  (mouseleave)="hideTooltip()"
+                />
+              </g>
+            </g>
+
+            <g *ngFor="let record of chartRecords">
+              <text
+                class="axis-label day-label"
+                [attr.x]="record.x"
+                y="296"
+                text-anchor="middle"
+              >
+                {{ record.dayLabel }}
+              </text>
+            </g>
+
+            <g *ngFor="let group of chartMonthGroups">
+              <text
+                class="axis-label month-label"
+                [attr.x]="group.centerX"
+                y="318"
+                text-anchor="middle"
+              >
+                {{ group.monthLabel }}
+              </text>
+              <line
+                *ngIf="group.dividerX !== undefined"
+                [attr.x1]="group.dividerX"
+                [attr.x2]="group.dividerX"
+                y1="278"
+                y2="302"
+                stroke="#cbd5e1"
+                stroke-width="1"
+                stroke-dasharray="2 2"
+              />
+            </g>
+          </svg>
+
+          <div class="chart-actions">
+            <button class="pdf-button" (click)="downloadReport()" [disabled]="isGeneratingPdf">
+              {{ isGeneratingPdf ? 'Generating PDF…' : 'Download Report (PDF)' }}
+            </button>
+          </div>
+
+          <div class="chart-tooltip" *ngIf="tooltip.visible" [style.left.px]="tooltip.x" [style.top.px]="tooltip.y">
+            <div class="tooltip-series">{{ tooltip.series }}</div>
+            <div class="tooltip-date">{{ tooltip.date }}</div>
+            <div class="tooltip-value">{{ tooltip.value }}</div>
+          </div>
+        </div>
+        </ng-container>
+
+        <ng-template #chartEmpty>
+          <div class="empty-state">No data available for this date range.</div>
+        </ng-template>
+      </div>
+    </section>
+  </div>
 </div>
