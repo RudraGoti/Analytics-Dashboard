@@ -1,0 +1,7 @@
+[build]
+  base = "mean-project"
+  command = "npm run build"
+  publish = "dist/mean-project/browser"
+
+[functions]
+  directory = "netlify/functions"
