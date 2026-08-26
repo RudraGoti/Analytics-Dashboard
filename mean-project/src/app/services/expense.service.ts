@@ -27,7 +27,7 @@ export interface DailyExpensePayload {
 
 export class ExpenseService {
 
-  private apiUrl = 'http://localhost:3000/api/expenses';
+  private apiUrl = '/api/expenses';
 
   constructor(private http: HttpClient) {}
 
