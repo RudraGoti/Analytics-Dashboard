@@ -1,1 +1,64 @@
-<p>notifications works!</p>
+<div class="notifications-container">
+
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Notifications</div>
+        <div class="panel-subtitle">Based on your expense activity in the last 30 days</div>
+      </div>
+      <div class="header-actions">
+        <button class="ghost-btn" type="button" (click)="loadNotifications()">
+          <span class="material-icons">refresh</span> Refresh
+        </button>
+        <button class="ghost-btn" type="button" *ngIf="unreadCount > 0" (click)="markAllRead()">
+          Mark all as read
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-row">
+      <button class="filter-chip" [class.active]="filter === 'all'" (click)="setFilter('all')">
+        All <span class="chip-count">{{ notifications.length }}</span>
+      </button>
+      <button class="filter-chip" [class.active]="filter === 'unread'" (click)="setFilter('unread')">
+        Unread <span class="chip-count">{{ unreadCount }}</span>
+      </button>
+      <button class="filter-chip" [class.active]="filter === 'alert'" (click)="setFilter('alert')">Alerts</button>
+      <button class="filter-chip" [class.active]="filter === 'warning'" (click)="setFilter('warning')">Warnings</button>
+      <button class="filter-chip" [class.active]="filter === 'info'" (click)="setFilter('info')">Info</button>
+    </div>
+
+    <div class="notif-loading" *ngIf="isLoading">Loading notifications…</div>
+    <div class="notif-error" *ngIf="errorMessage && !isLoading">{{ errorMessage }}</div>
+
+    <div class="notif-list" *ngIf="!isLoading && !errorMessage">
+      <div
+        class="notif-item"
+        *ngFor="let n of filteredNotifications"
+        [class.unread]="!n.read"
+        [ngClass]="n.type"
+      >
+        <div class="notif-icon-wrap">
+          <span class="material-icons">{{ n.icon }}</span>
+        </div>
+
+        <div class="notif-body" (click)="goToDate(n)">
+          <div class="notif-title-row">
+            <span class="notif-title">{{ n.title }}</span>
+            <span class="notif-date">{{ timeAgoLabel(n.date) }}</span>
+          </div>
+          <div class="notif-message">{{ n.message }}</div>
+        </div>
+
+        <button class="mark-read-btn" type="button" *ngIf="!n.read" (click)="markAsRead(n)" title="Mark as read">
+          <span class="material-icons">done</span>
+        </button>
+      </div>
+
+      <div class="empty-state" *ngIf="filteredNotifications.length === 0">
+        <span class="material-icons">notifications_none</span>
+        <p>You're all caught up. No notifications here.</p>
+      </div>
+    </div>
+  </section>
+</div>

@@ -51,7 +51,6 @@
 
   font-size: 16px;
   font-weight: 500;
-
 }
 
 .selected-date {
@@ -105,8 +104,11 @@
 .calendar-popup {
   position: fixed;
   top: 80px;
-  left: 50%;
-  transform: translateX(-50%);
+  /* Right-aligned under the date selector by default; JS
+     (updateCalendarPosition) refines top/right to match the
+     trigger's exact position once it's rendered. */
+  right: 28px;
+  left: auto;
   background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -174,11 +176,11 @@
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(-10px);
+    transform: translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translateY(0);
   }
 }
 

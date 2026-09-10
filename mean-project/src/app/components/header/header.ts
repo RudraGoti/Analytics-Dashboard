@@ -25,6 +25,7 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   toDate: string = '';
   showCalendar: boolean = false;
   isRangeMode: boolean = false;
+  showDatePicker: boolean = true;
   currentMonth: Date = new Date();
   calendarDates: Date[] = [];
   weekDays: string[] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -214,10 +215,19 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private updateCalendarPosition(): void {
     const header = document.querySelector('.header');
-    const popup = document.querySelector('.calendar-popup');
-    if (header && popup) {
+    const dateTrigger = document.querySelector('.date-picker-container');
+    const popup = document.querySelector('.calendar-popup') as HTMLElement | null;
+
+    if (header && dateTrigger && popup) {
       const headerRect = header.getBoundingClientRect();
-      (popup as HTMLElement).style.top = (headerRect.bottom + 12) + 'px';
+      const triggerRect = dateTrigger.getBoundingClientRect();
+
+      // Anchor the popup's right edge to the date selector's right edge
+      // so it drops down directly beneath the control that opened it,
+      // instead of floating centered on the screen.
+      popup.style.top = (headerRect.bottom + 12) + 'px';
+      popup.style.left = 'auto';
+      popup.style.right = (window.innerWidth - triggerRect.right) + 'px';
     }
   }
 
@@ -258,6 +268,26 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
 
       default:
         this.pageTitle = 'Dashboard';
+    }
+
+    // The date picker only makes sense on pages whose data is actually
+    // filtered by the selected date/range. Calendar has its own month
+    // navigation, and Notifications/Settings don't consume the selected
+    // date at all, so the picker is hidden there instead of dangling
+    // as a no-op control.
+    switch (route) {
+      case 'calendar':
+      case 'notifications':
+      case 'settings':
+        this.showDatePicker = false;
+        break;
+
+      default:
+        this.showDatePicker = true;
+    }
+
+    if (!this.showDatePicker) {
+      this.showCalendar = false;
     }
   }
 

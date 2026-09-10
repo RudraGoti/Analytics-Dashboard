@@ -1,1 +1,154 @@
-<p>Reports works!</p>
+<div class="reports-container">
+
+  <!-- Report Builder -->
+  <section class="panel builder-panel">
+    <div class="panel-header">
+      <div class="panel-title">Generate Report</div>
+    </div>
+
+    <div class="builder-body">
+      <div class="field-group">
+        <label>Report Title</label>
+        <input class="text-input" type="text" [(ngModel)]="reportTitle" placeholder="e.g. Monthly Expense Report" />
+      </div>
+
+      <div class="field-group">
+        <label>Range</label>
+        <div class="preset-row">
+          <button class="preset-btn" [class.active]="preset === 'today'" type="button" (click)="applyPreset('today')">Today</button>
+          <button class="preset-btn" [class.active]="preset === 'week'" type="button" (click)="applyPreset('week')">Last 7 Days</button>
+          <button class="preset-btn" [class.active]="preset === 'month'" type="button" (click)="applyPreset('month')">This Month</button>
+          <button class="preset-btn" [class.active]="preset === 'lastMonth'" type="button" (click)="applyPreset('lastMonth')">Last Month</button>
+        </div>
+      </div>
+
+      <div class="field-group range-fields">
+        <label class="range-field">
+          <span>From</span>
+          <input type="date" [(ngModel)]="fromDate" (ngModelChange)="onCustomDateChange()" />
+        </label>
+        <label class="range-field">
+          <span>To</span>
+          <input type="date" [(ngModel)]="toDate" (ngModelChange)="onCustomDateChange()" />
+        </label>
+      </div>
+
+      <button class="generate-btn" type="button" [disabled]="isGenerating || isLoading" (click)="generatePdf()">
+        <ng-container *ngIf="!isGenerating">
+          <span class="material-icons">picture_as_pdf</span> Download PDF Report
+        </ng-container>
+        <ng-container *ngIf="isGenerating">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="spin"><path d="M12 2a10 10 0 1 0 10 10" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>
+          Generating…
+        </ng-container>
+      </button>
+
+      <p class="error-note" *ngIf="errorMessage">{{ errorMessage }}</p>
+    </div>
+  </section>
+
+  <!-- Preview -->
+  <section class="panel preview-panel">
+    <div class="panel-header">
+      <div class="panel-title">Preview — {{ fromDate | date:'d MMM' }} to {{ toDate | date:'d MMM yyyy' }}</div>
+    </div>
+
+    <div class="preview-loading" *ngIf="isLoading">Loading preview…</div>
+
+    <div class="preview-body" *ngIf="!isLoading">
+      <div class="preview-summary">
+        <div class="summary-tile">
+          <div class="tile-label">Counter</div>
+          <div class="tile-value">{{ formatCurrency(summary.totalCounter) }}</div>
+        </div>
+        <div class="summary-tile">
+          <div class="tile-label">Total Expense</div>
+          <div class="tile-value val-red">{{ formatCurrency(summary.totalExpense) }}</div>
+        </div>
+        <div class="summary-tile">
+          <div class="tile-label">Net Position</div>
+          <div class="tile-value" [class.val-green]="summary.net >= 0" [class.val-red]="summary.net < 0">
+            {{ formatCurrency(summary.net) }}
+          </div>
+        </div>
+        <div class="summary-tile">
+          <div class="tile-label">Transactions</div>
+          <div class="tile-value">{{ summary.totalTransactions }}</div>
+        </div>
+        <div class="summary-tile">
+          <div class="tile-label">Categories</div>
+          <div class="tile-value">{{ summary.totalCategories }}</div>
+        </div>
+      </div>
+
+      <div class="preview-columns">
+        <div class="category-breakdown">
+          <div class="sub-title">Category Breakdown</div>
+          <div class="category-row" *ngFor="let cat of categorySummary">
+            <span class="cat-dot" [style.background]="cat.color"></span>
+            <span class="cat-name">{{ cat.category }}</span>
+            <span class="cat-bar-track">
+              <span class="cat-bar-fill" [style.width.%]="cat.percentage" [style.background]="cat.color"></span>
+            </span>
+            <span class="cat-amount">{{ formatCurrency(cat.amount) }}</span>
+          </div>
+          <p class="empty-note" *ngIf="categorySummary.length === 0">No expenses recorded in this range.</p>
+        </div>
+
+        <div class="daily-breakdown">
+          <div class="sub-title">Day-wise Summary</div>
+          <div class="day-table-wrap">
+            <table class="day-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Counter</th>
+                  <th>Expense</th>
+                  <th>Net</th>
+                  <th>Entries</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let r of records">
+                  <td>{{ r.date | date:'d MMM' }}</td>
+                  <td>{{ formatCurrency(r.counter) }}</td>
+                  <td>{{ formatCurrency(r.expense) }}</td>
+                  <td [class.val-green]="r.net >= 0" [class.val-red]="r.net < 0">{{ formatCurrency(r.net) }}</td>
+                  <td>{{ r.entryCount }}</td>
+                </tr>
+                <tr *ngIf="records.length === 0">
+                  <td colspan="5" class="empty-state">No records for this range.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- History -->
+  <section class="panel history-panel">
+    <div class="panel-header">
+      <div class="panel-title">Recent Reports</div>
+      <button class="clear-btn" type="button" *ngIf="history.length" (click)="clearHistory()">Clear</button>
+    </div>
+
+    <div class="history-body">
+      <div class="history-row" *ngFor="let item of history">
+        <div class="history-main">
+          <span class="material-icons history-icon">description</span>
+          <div>
+            <div class="history-title">{{ item.reportTitle }}</div>
+            <div class="history-sub">{{ item.from }} → {{ item.to }} • Generated {{ item.generatedAt | date:'d MMM, h:mm a' }}</div>
+          </div>
+        </div>
+        <div class="history-actions">
+          <span class="history-amount val-red">{{ formatCurrency(item.totalExpense) }}</span>
+          <button class="regen-btn" type="button" (click)="regenerate(item)">Load</button>
+        </div>
+      </div>
+      <p class="empty-note" *ngIf="history.length === 0">No reports generated yet. Your downloaded reports will appear here.</p>
+    </div>
+  </section>
+</div>

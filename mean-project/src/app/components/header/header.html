@@ -13,7 +13,7 @@
   <div class="header-right">
 
     <!-- DATE PICKER -->
-    <div class="date-picker-container">
+    <div class="date-picker-container" *ngIf="showDatePicker">
       <div class="date-display" (click)="toggleCalendar(); $event.stopPropagation()">
         <span class="material-icons calendar-icon-big">
           calendar_month

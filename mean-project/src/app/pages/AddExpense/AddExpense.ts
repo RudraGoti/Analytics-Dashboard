@@ -25,6 +25,7 @@ export class AddExpense implements OnInit, OnDestroy {
 
   synced: boolean = false;
   syncError: boolean = false;
+  syncErrorMessage: string = '';
   isSyncing: boolean = false;
   isReviewingConflict: boolean = false; // true after a 409 merge, until the user re-syncs
 
@@ -162,11 +163,40 @@ export class AddExpense implements OnInit, OnDestroy {
       title: '',
       category: '',
       amount: 0,
-      status: '',
+      status: 'Pending', // must be a valid enum value ('' is not) so a
+                          // half-filled row never breaks Mongoose validation
       mode: '',
       description: '',
       isOldEntry: false
     });
+  }
+
+  // ---------- Validation ----------
+
+  /**
+   * Checks every expense row has the fields the backend schema requires
+   * (title, category, mode, and a valid status). Returns a human-readable
+   * error naming the first incomplete row, or null if everything is valid.
+   */
+  private validateExpenses(): string | null {
+    for (let i = 0; i < this.expenses.length; i++) {
+      const exp = this.expenses[i];
+      const rowLabel = `Row ${i + 1}`;
+
+      if (!exp.title || !exp.title.trim()) {
+        return `${rowLabel}: Title is required.`;
+      }
+      if (!exp.category || !exp.category.trim()) {
+        return `${rowLabel}: Please select a category.`;
+      }
+      if (exp.status !== 'Paid' && exp.status !== 'Pending') {
+        return `${rowLabel}: Please select a status (Paid/Pending).`;
+      }
+      if (!exp.mode || !exp.mode.trim()) {
+        return `${rowLabel}: Please select a payment mode.`;
+      }
+    }
+    return null;
   }
 
   removeExpense(index: number): void {
@@ -210,8 +240,25 @@ export class AddExpense implements OnInit, OnDestroy {
       return;
     }
 
+    // Block the request entirely if any row is missing a required field —
+    // this is what used to reach Mongoose and throw a validation error.
+    const validationError = this.validateExpenses();
+    if (validationError) {
+      this.syncError = true;
+      this.syncErrorMessage = validationError;
+      try { this.cd.detectChanges(); } catch (e) {}
+
+      setTimeout(() => {
+        this.syncError = false;
+        this.syncErrorMessage = '';
+        try { this.cd.detectChanges(); } catch (e) {}
+      }, 4000);
+      return;
+    }
+
     this.isSyncing = true;
     this.syncError = false;
+    this.syncErrorMessage = '';
 
     // If we're reviewing a merged conflict, this click means "Sync again" -> PUT
     if (this.isReviewingConflict) {

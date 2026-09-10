@@ -1,1 +1,156 @@
-<p>calendar works!</p>
+<div class="calendar-container">
+
+  <!-- Month Summary -->
+  <div class="summary-grid">
+    <div class="dash-card card-1">
+      <div class="card-left">
+        <div class="card-title">Total Counter</div>
+        <div class="card-amount">{{ formatCurrency(monthSummary.totalCounter) }}</div>
+        <div class="card-entries">{{ monthSummary.activeDays }} active day(s)</div>
+      </div>
+      <div class="card-right"><span class="material-icons">today</span></div>
+    </div>
+
+    <div class="dash-card card-3">
+      <div class="card-left">
+        <div class="card-title">Total Expense</div>
+        <div class="card-amount">{{ formatCurrency(monthSummary.totalExpense) }}</div>
+        <div class="card-entries">this month</div>
+      </div>
+      <div class="card-right"><span class="material-icons">payments</span></div>
+    </div>
+
+    <div class="dash-card" [ngClass]="monthSummary.net >= 0 ? 'card-2' : 'card-3'">
+      <div class="card-left">
+        <div class="card-title">Net Position</div>
+        <div class="card-amount">{{ formatCurrency(monthSummary.net) }}</div>
+        <div class="card-entries">counter minus expense</div>
+      </div>
+      <div class="card-right"><span class="material-icons">account_balance_wallet</span></div>
+    </div>
+
+    <div class="dash-card card-4">
+      <div class="card-left">
+        <div class="card-title">Pending Entries</div>
+        <div class="card-amount">{{ monthSummary.pendingCount }}</div>
+        <div class="card-entries">awaiting payment</div>
+      </div>
+      <div class="card-right"><span class="material-icons">hourglass_empty</span></div>
+    </div>
+  </div>
+
+  <div class="calendar-main">
+
+    <!-- Calendar Panel -->
+    <section class="panel calendar-panel">
+
+      <div class="panel-header">
+        <div class="month-nav">
+          <button class="nav-btn" type="button" (click)="previousMonth()">
+            <span class="material-icons">chevron_left</span>
+          </button>
+          <div class="panel-title">{{ currentMonth | date:'MMMM yyyy' }}</div>
+          <button class="nav-btn" type="button" (click)="nextMonth()">
+            <span class="material-icons">chevron_right</span>
+          </button>
+        </div>
+        <button class="today-btn" type="button" (click)="goToToday()">Today</button>
+      </div>
+
+      <div class="calendar-weekdays">
+        <div class="weekday" *ngFor="let day of weekDays">{{ day }}</div>
+      </div>
+
+      <div class="calendar-loading" *ngIf="isLoading">Loading activity…</div>
+      <div class="calendar-error" *ngIf="errorMessage && !isLoading">{{ errorMessage }}</div>
+
+      <div class="calendar-grid" *ngIf="!isLoading">
+        <button
+          type="button"
+          class="calendar-cell"
+          *ngFor="let cell of cells"
+          [class.other-month]="!cell.inCurrentMonth"
+          [class.today]="cell.isToday"
+          [class.has-record]="cell.hasRecord"
+          [class.selected]="selectedCell?.dateKey === cell.dateKey && cell.inCurrentMonth"
+          [class.positive]="cell.hasRecord && cell.net >= 0"
+          [class.negative]="cell.hasRecord && cell.net < 0"
+          (click)="selectCell(cell)"
+        >
+          <span class="cell-day">{{ cell.date.getDate() }}</span>
+
+          <ng-container *ngIf="cell.hasRecord && cell.inCurrentMonth">
+            <span class="cell-net" [class.val-green]="cell.net >= 0" [class.val-red]="cell.net < 0">
+              {{ formatCurrency(cell.net) }}
+            </span>
+            <span class="cell-meta">
+              {{ cell.entryCount }} entr{{ cell.entryCount === 1 ? 'y' : 'ies' }}
+              <span class="cell-pending" *ngIf="cell.pendingCount > 0">• {{ cell.pendingCount }} pending</span>
+            </span>
+          </ng-container>
+
+          <span class="cell-empty" *ngIf="!cell.hasRecord && cell.inCurrentMonth">No entries</span>
+        </button>
+      </div>
+
+      <div class="calendar-legend">
+        <span class="legend-dot positive"></span> Net positive day
+        <span class="legend-dot negative"></span> Net negative day
+        <span class="legend-dot today"></span> Today
+      </div>
+    </section>
+
+    <!-- Day Detail Panel -->
+    <section class="panel detail-panel">
+      <div class="panel-header">
+        <div class="panel-title">Day Details</div>
+      </div>
+
+      <div class="detail-body" *ngIf="selectedCell; else noSelection">
+        <div class="detail-date">{{ formatSelectedDate(selectedCell) }}</div>
+
+        <div class="detail-stats" *ngIf="selectedCell.hasRecord; else noRecordDetail">
+          <div class="detail-row">
+            <span>Counter</span>
+            <strong>{{ formatCurrency(selectedCell.counter) }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Total Expense</span>
+            <strong>{{ formatCurrency(selectedCell.expenseTotal) }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Net Position</span>
+            <strong [class.val-green]="selectedCell.net >= 0" [class.val-red]="selectedCell.net < 0">
+              {{ formatCurrency(selectedCell.net) }}
+            </strong>
+          </div>
+          <div class="detail-row">
+            <span>Entries</span>
+            <strong>{{ selectedCell.entryCount }}</strong>
+          </div>
+          <div class="detail-row" *ngIf="selectedCell.pendingCount > 0">
+            <span>Pending</span>
+            <strong class="val-red">{{ selectedCell.pendingCount }}</strong>
+          </div>
+        </div>
+
+        <ng-template #noRecordDetail>
+          <p class="empty-note">No expense record found for this date yet.</p>
+        </ng-template>
+
+        <div class="detail-actions">
+          <button class="detail-btn primary" type="button" (click)="openInDashboard(selectedCell)">
+            <span class="material-icons">dashboard</span> View in Dashboard
+          </button>
+          <button class="detail-btn" type="button" (click)="openInAddExpense(selectedCell)">
+            <span class="material-icons">add_circle</span> Add / Edit Expense
+          </button>
+        </div>
+      </div>
+
+      <ng-template #noSelection>
+        <p class="empty-note">Select a date on the calendar to see its details.</p>
+      </ng-template>
+    </section>
+  </div>
+</div>

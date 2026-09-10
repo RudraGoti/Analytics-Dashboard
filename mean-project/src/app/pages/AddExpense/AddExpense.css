@@ -9,30 +9,17 @@
   font-family:"Poppins", sans-serif;
 }
 
-/* ---- Page ---- */
-.page-wrapper {
-  background: #f0f2f7;
-  min-height: 100vh;
-  padding: 32px 24px 60px;
-  color: #1a1d2e;
-}
-
-.page-title {
-  font-size: 1.6rem;
-  font-weight: 700;
-  margin-bottom: 0px;
-  letter-spacing: -0.03em;
-  color: #1a1d2e;
-}
-
-/* ---- Card ---- */
+/* ---- Card ----
+   Matches the shared card/panel look used on Dashboard, Reports,
+   Notifications, Calendar, etc. (18px radius, soft elevated shadow,
+   no visible border) so this page doesn't look like a different app. */
 .card {
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0,0,0,.07), 0 4px 16px rgba(0,0,0,.04);
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
   padding: 24px;
   margin-bottom: 20px;
-  border: 1px solid #e2e6ef;
+  border: 1px solid rgba(15, 23, 42, 0.05);
 }
 
 .card-title {
@@ -145,8 +132,14 @@
 
 .counter-input:focus { border-color: #2563eb; }
 
-/* ---- Table ---- */
-.table-scroll { overflow-x: auto; }
+/* ---- Table ----
+   Capped height with its own scrollbar so a long expense list scrolls
+   *inside* the table instead of pushing the summary/sync bar off screen. */
+.table-scroll {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 46vh;
+}
 
 .expenses-table {
   width: 100%;
@@ -162,6 +155,10 @@
   text-transform: uppercase;
   padding: 0 8px 12px;
   white-space: nowrap;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 5;
 }
 
 .expenses-table tbody tr.expense-row { vertical-align: middle; }
@@ -454,14 +451,23 @@
 
 .add-btn:hover { background: #dbeafe; border-color: #2563eb; }
 
-/* ---- Summary ---- */
+/* ---- Summary ----
+   Sticks to the bottom of the scrollable page area so the Sync button is
+   always reachable without scrolling, no matter how many expense rows
+   there are. */
 .summary-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
-  margin-bottom: 16px;
+  margin-bottom: 0;
   align-items: stretch;
   max-width: 1120px;
+  position: sticky;
+  bottom: 0;
+  background: #f8fafc;
+  padding: 12px 0 4px;
+  box-shadow: 0 -12px 16px -8px rgba(15, 23, 42, 0.06);
+  z-index: 20;
 }
 
 .summary-card {
@@ -531,6 +537,13 @@
 .sync-btn.synced  { background: #16a34a; box-shadow: 0 4px 14px rgba(22,163,74,.3); }
 .sync-btn.error   { background: #dc2626; box-shadow: 0 4px 14px rgba(220,38,38,.3); }
 .sync-btn:disabled { cursor: not-allowed; opacity: 0.85; transform: none; }
+
+.sync-error-msg {
+  margin-top: 8px;
+  font-size: 0.78rem;
+  color: #dc2626;
+  text-align: center;
+}
 
 @keyframes spin {
   from { transform: rotate(0deg); }

@@ -506,5 +506,6 @@
           Failed — Retry
         </ng-container>
       </button>
+      <div class="sync-error-msg" *ngIf="syncError && syncErrorMessage">{{ syncErrorMessage }}</div>
     </div>
   </div>

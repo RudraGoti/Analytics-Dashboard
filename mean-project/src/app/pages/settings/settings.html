@@ -1,1 +1,143 @@
-<p>settings works!</p>
+<div class="settings-container">
+
+  <div class="saved-toast" *ngIf="savedMessage">
+    <span class="material-icons">check_circle</span> {{ savedMessage }}
+  </div>
+
+  <!-- Profile -->
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Profile</div>
+        <div class="panel-subtitle">Stored on this device only — used to personalise the app</div>
+      </div>
+      <span class="material-icons header-icon">account_circle</span>
+    </div>
+
+    <div class="panel-body two-col">
+      <label class="field">
+        <span>Name</span>
+        <input type="text" [(ngModel)]="profile.name" placeholder="Your name" />
+      </label>
+      <label class="field">
+        <span>Email</span>
+        <input type="email" [(ngModel)]="profile.email" placeholder="you@example.com" />
+      </label>
+      <label class="field">
+        <span>Business Name</span>
+        <input type="text" [(ngModel)]="profile.businessName" placeholder="e.g. Riya General Store" />
+      </label>
+    </div>
+
+    <div class="panel-footer">
+      <button class="save-btn" type="button" (click)="saveProfile()">Save Profile</button>
+    </div>
+  </section>
+
+  <!-- Preferences -->
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Preferences</div>
+        <div class="panel-subtitle">Defaults used across Add Expense and table views</div>
+      </div>
+      <span class="material-icons header-icon">tune</span>
+    </div>
+
+    <div class="panel-body two-col">
+      <label class="field">
+        <span>Default Payment Mode</span>
+        <select [(ngModel)]="prefs.defaultMode">
+          <option value="Cash">Cash</option>
+          <option value="UPI">UPI</option>
+          <option value="Card">Card</option>
+          <option value="Bank Transfer">Bank Transfer</option>
+        </select>
+      </label>
+
+      <label class="field checkbox-field">
+        <input type="checkbox" [(ngModel)]="prefs.weekStartsMonday" />
+        <span>Week starts on Monday</span>
+      </label>
+
+      <label class="field checkbox-field">
+        <input type="checkbox" [(ngModel)]="prefs.compactTables" />
+        <span>Compact table rows</span>
+      </label>
+    </div>
+
+    <div class="panel-footer">
+      <button class="save-btn" type="button" (click)="savePrefs()">Save Preferences</button>
+    </div>
+  </section>
+
+  <!-- Notification Settings -->
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Notification Settings</div>
+        <div class="panel-subtitle">Controls when a "High Expense" alert appears on the Notifications page</div>
+      </div>
+      <span class="material-icons header-icon">notifications_active</span>
+    </div>
+
+    <div class="panel-body">
+      <label class="field">
+        <span>High Expense Alert Threshold (₹)</span>
+        <input type="number" min="0" [(ngModel)]="highExpenseThreshold" />
+      </label>
+    </div>
+
+    <div class="panel-footer">
+      <button class="save-btn" type="button" (click)="saveThreshold()">Save Threshold</button>
+    </div>
+  </section>
+
+  <!-- Data Management -->
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Data Management</div>
+        <div class="panel-subtitle">Export your expense records or reset local app data</div>
+      </div>
+      <span class="material-icons header-icon">storage</span>
+    </div>
+
+    <div class="panel-body data-actions">
+      <div class="action-row">
+        <div>
+          <div class="action-title">Export all expense data</div>
+          <div class="action-desc">Downloads every synced expense record as a JSON file.</div>
+        </div>
+        <button class="outline-btn" type="button" [disabled]="isExporting" (click)="exportAllData()">
+          <span class="material-icons">download</span>
+          {{ isExporting ? 'Exporting…' : 'Export JSON' }}
+        </button>
+      </div>
+      <p class="error-note" *ngIf="exportError">{{ exportError }}</p>
+
+      <div class="action-row danger">
+        <div>
+          <div class="action-title">Clear local app data</div>
+          <div class="action-desc">Resets preferences, notification read-state and report history on this device.</div>
+        </div>
+        <button class="danger-btn" type="button" (click)="clearLocalAppData()">
+          <span class="material-icons">delete_sweep</span> Clear
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section class="panel about-panel">
+    <div class="panel-header">
+      <div class="panel-title">About</div>
+      <span class="material-icons header-icon">info</span>
+    </div>
+    <div class="panel-body">
+      <div class="about-row"><span>App</span><strong>Analytics Dashboard (MEAN)</strong></div>
+      <div class="about-row"><span>Version</span><strong>1.0.0</strong></div>
+      <div class="about-row"><span>API Endpoint</span><strong>http://localhost:3000/api/expenses</strong></div>
+    </div>
+  </section>
+</div>
