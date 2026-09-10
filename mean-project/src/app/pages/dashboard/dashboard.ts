@@ -190,4 +190,26 @@ export class Dashboard implements OnInit, OnDestroy {
     const text = this.getStatusBadgeText(expense);
     return text === 'pending' ? 'pending' : 'paid';
   }
+
+  updateExpenseStatus(expense: any, event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    const previousStatus = expense.status;
+    const nextStatus = select.value;
+
+    if (previousStatus === nextStatus) {
+      return;
+    }
+
+    expense.status = nextStatus;
+    this.expenseService.updateExpenses(this.selectedDate, {
+      counter: this.counter,
+      expenses: this.expenses
+    }).subscribe({
+      error: (err) => {
+        console.error('Dashboard status update error:', err);
+        expense.status = previousStatus;
+        select.value = previousStatus || 'Pending';
+      }
+    });
+  }
 }

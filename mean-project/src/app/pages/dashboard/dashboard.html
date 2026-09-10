@@ -96,9 +96,17 @@
               <td>{{ expense.category }}</td>
               <td>₹ {{ expense.amount | number:'1.0-0' }}</td>
               <td>
-                <span class="status-badge" [ngClass]="getStatusBadgeClass(expense)">
-                  {{ getStatusBadgeText(expense) }}
-                </span>
+                <select
+                  class="status-select"
+                  [class.status-paid]="expense.status === 'Paid'"
+                  [class.status-pending]="expense.status !== 'Paid'"
+                  [value]="expense.status || 'Pending'"
+                  (change)="updateExpenseStatus(expense, $event)"
+                  aria-label="Update bill status"
+                >
+                  <option value="Paid">Paid</option>
+                  <option value="Pending">Pending</option>
+                </select>
               </td>
             </tr>
             <tr *ngIf="!expenses || expenses.length === 0">

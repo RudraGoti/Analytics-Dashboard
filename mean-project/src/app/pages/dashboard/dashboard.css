@@ -192,6 +192,39 @@
   background: #ef4444;
 }
 
+.status-select {
+  appearance: none;
+  min-width: 94px;
+  padding: 7px 28px 7px 11px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 14px) 50%, calc(100% - 10px) 50%;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+.status-select.status-paid {
+  background-color: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
+
+.status-select.status-pending {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.status-select:focus {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+}
+
 .empty-state {
   padding: 24px 18px;
   text-align: center;
