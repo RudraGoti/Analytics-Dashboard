@@ -1,0 +1,9 @@
+[build]
+  base = "mean-project"
+  command = "npm run build"
+  publish = "dist/mean-project/browser"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
