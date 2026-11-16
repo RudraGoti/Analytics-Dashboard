@@ -1,1 +1,41 @@
-<p>calendar works!</p>
+<section class="calendar-page">
+  <div class="calendar-toolbar">
+    <h2>Calendar Activity</h2>
+    <div class="month-controls cal-head">
+      <button type="button" class="cal-nav" (click)="previousMonth()" aria-label="Previous month"><span class="material-icons">chevron_left</span></button>
+      <strong class="cal-month">{{ currentMonth | date:'MMMM yyyy' }}</strong>
+      <button type="button" class="cal-nav" (click)="nextMonth()" aria-label="Next month"><span class="material-icons">chevron_right</span></button>
+      <button type="button" class="today-button cal-range-apply" (click)="goToToday()">Today</button>
+    </div>
+  </div>
+
+  <div class="month-totals">
+    <div><span>Days recorded</span><strong>{{ monthDaysRecorded }}</strong></div>
+    <div><span>Counter</span><strong>₹ {{ monthCounter | number:'1.0-2' }}</strong></div>
+    <div><span>Expenses</span><strong>₹ {{ monthExpenses | number:'1.0-2' }}</strong></div>
+  </div>
+
+  <p class="calendar-state" *ngIf="isLoading">Loading activity…</p>
+  <p class="calendar-state error" *ngIf="errorMessage">{{ errorMessage }}</p>
+  <div class="calendar-grid-card cal-card" *ngIf="!isLoading">
+    <div class="cal-weekdays">
+      <div class="weekday cal-weekday" *ngFor="let day of weekDays">{{ day }}</div>
+    </div>
+    <div class="month-grid cal-grid activity-calendar">
+      <button class="day-cell cal-day" *ngFor="let day of days"
+        type="button"
+        [class.other-month]="!isCurrentMonth(day)"
+        [class.today]="isToday(day)"
+        [class.selected]="isSelected(day)"
+        [disabled]="!isCurrentMonth(day)"
+        (click)="selectDay(day)">
+        <span class="day-number">{{ day.getDate() }}</span>
+        <ng-container *ngIf="dateRecord(day) as record">
+          <span class="day-counter">Counter ₹{{ record.counter | number:'1.0-0' }}</span>
+          <span class="day-expense">Expenses ₹{{ expenseTotal(record) | number:'1.0-0' }}</span>
+          <span class="day-count">{{ record.expenses.length }} expense(s)</span>
+        </ng-container>
+      </button>
+    </div>
+  </div>
+</section>

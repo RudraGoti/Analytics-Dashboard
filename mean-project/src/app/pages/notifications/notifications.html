@@ -1,1 +1,14 @@
-<p>notifications works!</p>
+<section class="notifications-page">
+  <div class="page-heading"><h2>Notifications</h2><p>Recent reminders and pending expenses.</p></div>
+  <p class="notification-state" *ngIf="isLoading">Loading notifications…</p>
+  <p class="notification-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+  <div class="notification-list">
+    <button class="notification-item" *ngFor="let item of items" type="button" [class]="item.type" (click)="openItem(item)">
+      <span class="notification-icon material-icons">
+        {{ item.type === 'error' ? 'error' : item.type === 'success' ? 'check_circle' : item.type === 'warning' ? 'warning' : 'info' }}
+      </span>
+      <span class="notification-copy"><strong>{{ item.title }}</strong><span>{{ item.message }}</span></span>
+      <time>{{ item.date | date:'dd MMM yyyy' }}</time>
+    </button>
+  </div>
+</section>

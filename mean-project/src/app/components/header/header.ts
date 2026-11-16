@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, AfterViewInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
@@ -13,7 +13,7 @@ import { DateRange, DateService } from '../../services/date.service';
   templateUrl: './header.html',
   styleUrls: ['./header.css']
 })
-export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
+export class HeaderComponent implements OnInit, OnDestroy {
 
   @Input() isSidebarCollapsed = false;
 
@@ -32,7 +32,7 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   private dateSubscription = new Subscription();
   private rangeSubscription = new Subscription();
 
-  constructor(private router: Router, private dateService: DateService) {
+  constructor(public router: Router, private dateService: DateService) {
     const today = new Date();
 
     this.currentDate = today.toLocaleDateString(
@@ -75,7 +75,6 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     this.showCalendar = !this.showCalendar;
     if (this.showCalendar) {
       this.generateCalendarDates();
-      setTimeout(() => this.updateCalendarPosition(), 0);
     }
   }
 
@@ -87,6 +86,10 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   setSingleDate(value: string): void {
     this.dateService.setSingleDate(value);
     this.showCalendar = false;
+  }
+
+  openNotifications(): void {
+    this.router.navigate(['/notifications']);
   }
 
   formatRangeLabel(range: DateRange): string {
@@ -196,29 +199,9 @@ export class HeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  ngAfterViewInit(): void {
-    this.updateCalendarPosition();
-  }
-
-  @HostListener('window:scroll')
-  onScroll(): void {
-    if (this.showCalendar) {
-      this.updateCalendarPosition();
-    }
-  }
-
   ngOnDestroy(): void {
     this.rangeSubscription.unsubscribe();
     this.dateSubscription.unsubscribe();
-  }
-
-  private updateCalendarPosition(): void {
-    const header = document.querySelector('.header');
-    const popup = document.querySelector('.calendar-popup');
-    if (header && popup) {
-      const headerRect = header.getBoundingClientRect();
-      (popup as HTMLElement).style.top = (headerRect.bottom + 12) + 'px';
-    }
   }
 
   updateTitle(url: string) {

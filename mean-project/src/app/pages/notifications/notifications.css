@@ -1,0 +1,9 @@
+:host { display: block; font-family: "Poppins", sans-serif; color: #1e293b; }
+.notifications-page { display: flex; flex-direction: column; gap: 16px; }
+.page-heading h2 { margin: 0; font-size: 22px; }.page-heading p { margin: 5px 0 0; color: #64748b; font-size: 13px; }
+.notification-list { display: flex; flex-direction: column; gap: 10px; }
+.notification-item { display: flex; align-items: center; gap: 14px; width: 100%; padding: 16px; border: 1px solid #e2e8f0; border-radius: 12px; background: white; text-align: left; cursor: pointer; font: inherit; }
+.notification-item:hover { border-color: #93c5fd; }.notification-icon { color: #2563eb; }.notification-item.warning .notification-icon { color: #d97706; }.notification-item.success .notification-icon { color: #059669; }.notification-item.error .notification-icon { color: #dc2626; }
+.notification-copy { display: flex; flex-direction: column; gap: 3px; flex: 1; }.notification-copy span, time { color: #64748b; font-size: 12px; }time { white-space: nowrap; }
+.notification-state, .notification-error { padding: 12px; margin: 0; color: #64748b; }.notification-error { color: #b91c1c; }
+@media (max-width: 600px) { .notification-item { align-items: flex-start; }.notification-item time { display: none; } }

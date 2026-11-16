@@ -1,14 +1,11 @@
-import { Component, HostListener, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ExpenseService, Expense } from '../../services/expense.service';
 import { DateService } from '../../services/date.service';
+import { SettingsService } from '../../services/settings.service';
 import { Subscription } from 'rxjs';
-
-interface Category {
-  name: string;
-  icon: string;
-}
 
 @Component({
   selector: 'app-add-expense',
@@ -17,120 +14,56 @@ interface Category {
   templateUrl: './AddExpense.html',
   styleUrls: ['./AddExpense.css']
 })
-
 export class AddExpense implements OnInit, OnDestroy {
-
-  counter: number = 15450;
-  selectedDate: string = '';
-
-  synced: boolean = false;
-  syncError: boolean = false;
-  isSyncing: boolean = false;
-  isReviewingConflict: boolean = false; // true after a 409 merge, until the user re-syncs
-
+  counter = 0;
+  selectedDate = '';
+  synced = false;
+  syncError = false;
+  syncErrorMessage = '';
+  isSyncing = false;
+  isReviewingConflict = false;
+  hasSavedRecord = false;
   openDropdown: number | null = null;
-  private dateSubscription = new Subscription();
+  openStatusDropdown: number | null = null;
+  openModeDropdown: number | null = null;
+  expenses: Expense[] = [];
+  private readonly subscriptions = new Subscription();
+  private loadVersion = 0;
+  private defaults = { defaultCategory: 'Other', defaultMode: 'Cash', defaultStatus: 'Pending' };
+
+  categories = [
+    { name: 'Product Purchase', icon: '🛒' },
+    { name: 'Rent', icon: '🏠' },
+    { name: 'Light Bill', icon: '💡' },
+    { name: 'Maintenance', icon: '🛠️' },
+    { name: 'Petrol', icon: '⛽' },
+    { name: 'Other', icon: '📦' }
+  ];
 
   constructor(
     private expenseService: ExpenseService,
     private dateService: DateService,
-    private cd: ChangeDetectorRef
+    private settingsService: SettingsService,
+    private cd: ChangeDetectorRef,
   ) {}
 
-  // ---------- Categories ----------
-
-  categories = [
-    { name: 'Product Purchase', icon: '🛒'},
-    { name: 'Rent', icon: '🏠'},
-    { name: 'Light Bill', icon: '💡'},
-    { name: 'Maintenance', icon: '🛠️'},
-    { name: 'Petrol', icon: '⛽'},
-    { name: 'Other', icon: '📦'}
-  ];
-
-  getCategoryIcon(category: string): string {
-
-    switch (category) {
-
-      case 'Product Purchase':
-        return '🛒';
-
-      case 'Rent':
-        return '🏠';
-
-      case 'Light Bill':
-        return '💡';
-
-      case 'Internet':
-        return '🌐';
-
-      case 'Salary':
-        return '💰';
-
-      case 'Transport':
-        return '🚚';
-
-      default:
-        return '📦';
-    }
-  }
-
   ngOnInit(): void {
-    const date = this.dateService.selectedDate$.getValue();
-    this.selectedDate = date;
-
-    this.dateSubscription = this.dateService.selectedDate$.subscribe((dateValue) => {
-      this.selectedDate = dateValue;
-      // Reset review state when date changes
+    this.subscriptions.add(this.settingsService.settings$.subscribe((settings) => {
+      this.defaults = settings;
+    }));
+    this.subscriptions.add(this.dateService.selectedDate$.subscribe((date) => {
+      this.selectedDate = date;
       this.isReviewingConflict = false;
-    });
+      this.loadRecord(date);
+    }));
   }
 
   ngOnDestroy(): void {
-    this.dateSubscription.unsubscribe();
+    this.subscriptions.unsubscribe();
   }
 
-  // ---------- Expense Data ----------
-
-  expenses: Expense[] = [
-    {
-      title: 'Product Purchase',
-      category: 'Product Purchase',
-      amount: 1250,
-      status: 'Paid',
-      mode: 'Cash',
-      description: 'Stationery and prints',
-      isOldEntry: false
-    },
-
-    {
-      title: 'Rent',
-      category: 'Rent',
-      amount: 2100,
-      status: 'Pending',
-      mode: 'Cash',
-      description: 'Monthly hosting charge',
-      isOldEntry: false
-    },
-
-    {
-      title: 'Transport',
-      category: 'Transport',
-      amount: 2100,
-      status: 'Pending',
-      mode: 'UPI',
-      description: 'Team lunch with client',
-      isOldEntry: false
-    }
-  ];
-
-  // ---------- Computed Values ----------
-
   get totalExpenses(): number {
-    return this.expenses.reduce(
-      (sum, expense) => sum + Number(expense.amount || 0),
-      0
-    );
+    return this.expenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
   }
 
   get netPosition(): number {
@@ -138,51 +71,37 @@ export class AddExpense implements OnInit, OnDestroy {
   }
 
   getOldExpenses(): Expense[] {
-    return this.expenses.filter(exp => exp.isOldEntry);
+    return this.expenses.filter((expense) => expense.isOldEntry);
   }
 
   getNewExpenses(): Expense[] {
-    return this.expenses.filter(exp => !exp.isOldEntry);
+    return this.expenses.filter((expense) => !expense.isOldEntry);
   }
 
   getExpenseIndex(expense: Expense): number {
     return this.expenses.indexOf(expense);
   }
 
-  // ---------- Counter ----------
-
   updateCounter(value: number | string): void {
     this.counter = Number(value) || 0;
   }
 
-  // ---------- CRUD ----------
-
   addExpense(): void {
-    this.expenses.push({
-      title: '',
-      category: '',
-      amount: 0,
-      status: '',
-      mode: '',
-      description: '',
-      isOldEntry: false
-    });
+    this.expenses.push(this.createBlankExpense());
   }
 
   removeExpense(index: number): void {
     this.expenses.splice(index, 1);
   }
 
-  // ---------- Dropdown ----------
+  getCategoryIcon(category: string): string {
+    return this.categories.find((item) => item.name === category)?.icon || '📦';
+  }
 
   toggleDropdown(index: number): void {
-    if (this.openDropdown === index) {
-      this.openDropdown = null;
-    } else {
-      this.openDropdown = index;
-      this.openStatusDropdown = null;  // close others
-      this.openModeDropdown = null;
-    }
+    this.openDropdown = this.openDropdown === index ? null : index;
+    this.openStatusDropdown = null;
+    this.openModeDropdown = null;
   }
 
   selectCategory(index: number, categoryName: string): void {
@@ -190,231 +109,207 @@ export class AddExpense implements OnInit, OnDestroy {
     this.openDropdown = null;
   }
 
-  // ---------- Close Dropdown ----------
-
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-
     const target = event.target as HTMLElement;
-
     if (!target.closest('.cat-wrap')) {
       this.openDropdown = null;
+      this.openStatusDropdown = null;
+      this.openModeDropdown = null;
     }
   }
 
-  // ---------- Save To MongoDB ----------
+  saveExpenses(): void {
+    if (this.isSyncing) return;
 
-  syncToDatabase(): void {
-
-    if (this.isSyncing) {
+    const expensesToSave = this.expenses.filter((expense) => !this.isCompletelyEmpty(expense));
+    if (expensesToSave.some((expense) => !expense.title.trim() || !expense.category.trim())) {
+      this.showSyncError('Enter a title and category for every expense.');
       return;
     }
 
     this.isSyncing = true;
     this.syncError = false;
-
-    // If we're reviewing a merged conflict, this click means "Sync again" -> PUT
-    if (this.isReviewingConflict) {
-      this.performUpdateToDatabase();
-      return;
-    }
-
-    const payload = {
+    this.syncErrorMessage = '';
+    const action = this.hasSavedRecord || this.isReviewingConflict ? 'replace' : undefined;
+    this.expenseService.saveExpenses({
       date: this.selectedDate,
       counter: this.counter,
-      expenses: this.expenses
-    };
-
-    this.expenseService.saveExpenses(payload).subscribe(
-
-      (res: any) => {
-
-        console.log('Saved successfully:', res);
-
-        this.isSyncing = false;
-        this.synced = true;
-        try { this.cd.detectChanges(); } catch (e) {}
-
-        setTimeout(() => {
-          this.synced = false;
-          try { this.cd.detectChanges(); } catch (e) {}
-        }, 2500);
-      },
-
-      (err: any) => {
-
-        console.error('Save failed:', err);
-
-        // Handle duplicate date - fetch existing entries and let the user review/merge
-        if (err.status === 409 && err.error?.conflict) {
-          this.handleDuplicateDateConflict(err.error.data);
+      expenses: expensesToSave,
+      action,
+    }).subscribe({
+      next: () => this.finishSave(expensesToSave),
+      error: (error: HttpErrorResponse) => {
+        if (error.status === 409 && error.error?.conflict) {
+          this.handleDuplicateDateConflict();
           return;
         }
-
         this.isSyncing = false;
-        try { this.cd.detectChanges(); } catch (e) {}
-
-        this.syncError = true;
-
-        setTimeout(() => {
-          this.syncError = false;
-        }, 3000);
-      }
-    );
+        this.showSyncError(this.getSaveErrorMessage(error));
+        this.cd.markForCheck();
+      },
+    });
   }
 
-  // ---------- Handle Duplicate Date ----------
+  private getSaveErrorMessage(error: HttpErrorResponse): string {
+    if (error.status === 0) {
+      return 'Cannot reach the server. Check that the backend is running, then retry.';
+    }
+    if (error.status === 503) {
+      return 'Database is unavailable. Check the MongoDB connection, then retry.';
+    }
+    if (typeof error.error?.error === 'string') {
+      return error.error.error;
+    }
+    return 'Unable to save this record. Please try again.';
+  }
 
-  private handleDuplicateDateConflict(existingData: any): void {
-
-    // Fetch existing expenses for the date
-    this.expenseService.getExpenseByDate(this.selectedDate).subscribe(
-      (data: any) => {
-        if (data && data.expenses) {
-          // Map existing expenses to the expense model and mark as old
-          const existingExpenses = data.expenses.map((exp: any) => ({
-            title: exp.title || '',
-            category: exp.category || '',
-            amount: exp.amount || 0,
-            status: exp.status || '',
-            mode: exp.mode || '',
-            description: exp.description || '',
-            billFileName: exp.billFileName || undefined,
+  private loadRecord(date: string): void {
+    const version = ++this.loadVersion;
+    this.expenses = [this.createBlankExpense()];
+    this.counter = 0;
+    this.hasSavedRecord = false;
+    this.syncError = false;
+    this.syncErrorMessage = '';
+    this.expenseService.getExpenseByDate(date).subscribe({
+      next: (record) => {
+        if (version !== this.loadVersion || this.selectedDate !== date) return;
+        if (record) {
+          this.counter = Number(record.counter || 0);
+          this.expenses = (record.expenses || []).map((expense: Expense) => ({
+            ...expense,
             billFile: null,
-            isOldEntry: true // Mark as fetched from database
+            isOldEntry: true,
           }));
-
-          // Merge: existing entries first, then new entries
-          this.expenses = [...existingExpenses, ...this.expenses];
-
-          // Update counter from existing data if needed
-          if (data.counter) {
-            this.counter = data.counter;
-          }
-
-          // Stop here so the user can review/edit before syncing again
-          this.isReviewingConflict = true;
-          this.isSyncing = false;
-          try { this.cd.detectChanges(); } catch (e) {}
-
-          console.log(`Loaded ${existingExpenses.length} existing expense(s) for ${this.selectedDate}. Awaiting review before update.`);
-        } else {
-          this.isSyncing = false;
-          try { this.cd.detectChanges(); } catch (e) {}
+          this.hasSavedRecord = true;
+        }
+        this.cd.markForCheck();
+      },
+      error: () => {
+        if (version === this.loadVersion) {
+          this.showSyncError('Unable to load the saved record for this date.');
+          this.cd.markForCheck();
         }
       },
-      (fetchErr: any) => {
-        console.error('Failed to fetch existing entries:', fetchErr);
-        this.isSyncing = false;
-        this.syncError = true;
-        try { this.cd.detectChanges(); } catch (e) {}
-
-        setTimeout(() => {
-          this.syncError = false;
-        }, 3000);
-      }
-    );
+    });
   }
 
-  private performUpdateToDatabase(): void {
-    const payload = {
-      counter: this.counter,
-      expenses: this.expenses
-    };
-
-    this.expenseService.updateExpenses(this.selectedDate, payload).subscribe(
-      (res: any) => {
-        console.log('Updated successfully:', res);
+  private handleDuplicateDateConflict(): void {
+    this.expenseService.getExpenseByDate(this.selectedDate).subscribe({
+      next: (record) => {
+        if (!record) {
+          this.isSyncing = false;
+          this.showSyncError('A record conflict occurred but the saved record could not be loaded.');
+          this.cd.markForCheck();
+          return;
+        }
+        const currentCounter = this.counter;
+        const existingExpenses = (record.expenses || []).map((expense: Expense) => ({
+          ...expense,
+          billFile: null,
+          isOldEntry: true,
+        }));
+        const currentExpenses = this.expenses.filter((expense) => !this.isCompletelyEmpty(expense));
+        this.expenses = [...existingExpenses, ...currentExpenses];
+        this.counter = currentCounter;
+        this.hasSavedRecord = true;
+        this.isReviewingConflict = true;
         this.isSyncing = false;
-        this.synced = true;
-        this.isReviewingConflict = false;
-        try { this.cd.detectChanges(); } catch (e) {}
-
-        setTimeout(() => {
-          this.synced = false;
-          try { this.cd.detectChanges(); } catch (e) {}
-        }, 2500);
+        this.showSyncError('A record was created for this date. Review the merged entries, then sync again.');
+        this.cd.markForCheck();
       },
-      (err: any) => {
-        console.error('Update failed:', err);
+      error: () => {
         this.isSyncing = false;
-        this.syncError = true;
-        try { this.cd.detectChanges(); } catch (e) {}
-
-        setTimeout(() => {
-          this.syncError = false;
-        }, 3000);
-      }
-    );
+        this.showSyncError('Unable to load the conflicting record. Please retry.');
+        this.cd.markForCheck();
+      },
+    });
   }
 
-openStatusDropdown: number | null = null;
-openModeDropdown: number | null = null;
+  private finishSave(savedExpenses: Expense[]): void {
+    this.isSyncing = false;
+    this.synced = true;
+    this.hasSavedRecord = true;
+    this.isReviewingConflict = false;
+    this.expenses = savedExpenses.map((expense) => ({ ...expense, isOldEntry: true, billFile: null }));
+    this.syncError = false;
+    this.syncErrorMessage = '';
+    this.cd.markForCheck();
+    setTimeout(() => {
+      this.synced = false;
+      this.cd.markForCheck();
+    }, 2500);
+  }
 
+  private showSyncError(message: string): void {
+    this.syncError = true;
+    this.syncErrorMessage = message;
+  }
 
+  private isCompletelyEmpty(expense: Expense): boolean {
+    return !expense.title.trim()
+      && !expense.description.trim()
+      && Number(expense.amount || 0) === 0
+      && !expense.billFile
+      && (!expense.category || expense.category === this.defaults.defaultCategory);
+  }
 
-toggleStatusDropdown(index: number) {
-  if (this.openStatusDropdown === index) {
-    this.openStatusDropdown = null;
-  } else {
-    this.openStatusDropdown = index;
-    this.openDropdown = null;        // close others
+  private createBlankExpense(): Expense {
+    return {
+      title: '',
+      category: this.defaults.defaultCategory,
+      amount: 0,
+      status: this.defaults.defaultStatus,
+      mode: this.defaults.defaultMode,
+      description: '',
+      isOldEntry: false,
+    };
+  }
+
+  toggleStatusDropdown(index: number): void {
+    this.openStatusDropdown = this.openStatusDropdown === index ? null : index;
+    this.openDropdown = null;
     this.openModeDropdown = null;
   }
-}
 
-selectStatus(index: number, status: string) {
-  this.expenses[index].status = status;
-  this.openStatusDropdown = null;
-}
-
-toggleModeDropdown(index: number) {
-  if (this.openModeDropdown === index) {
-    this.openModeDropdown = null;
-  } else {
-    this.openModeDropdown = index;
-    this.openDropdown = null;        // close others
+  selectStatus(index: number, status: string): void {
+    this.expenses[index].status = status;
     this.openStatusDropdown = null;
   }
-}
 
-selectMode(index: number, mode: string) {
-  this.expenses[index].mode = mode;
-  this.openModeDropdown = null;
-}
+  toggleModeDropdown(index: number): void {
+    this.openModeDropdown = this.openModeDropdown === index ? null : index;
+    this.openDropdown = null;
+    this.openStatusDropdown = null;
+  }
 
-// ---------- Bill Upload ----------
+  selectMode(index: number, mode: string): void {
+    this.expenses[index].mode = mode;
+    this.openModeDropdown = null;
+  }
 
-onBillFileSelected(event: any, index: number): void {
-  const file = event.target.files?.[0];
-  if (file) {
-    // Validate file type (only PDF and images)
+  onBillFileSelected(event: Event, index: number): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
     const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
     if (!validTypes.includes(file.type)) {
       alert('Please upload a valid file (PDF or Image)');
       return;
     }
-
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
+    if (file.size > 5 * 1024 * 1024) {
       alert('File size must be less than 5MB');
       return;
     }
-
     this.expenses[index].billFile = file;
     this.expenses[index].billFileName = file.name;
   }
-}
 
-removeBillFile(index: number): void {
-  this.expenses[index].billFile = null;
-  this.expenses[index].billFileName = undefined;
-}
+  removeBillFile(index: number): void {
+    this.expenses[index].billFile = null;
+    this.expenses[index].billFileName = undefined;
+  }
 
-triggerBillUpload(index: number): void {
-  const fileInput = document.getElementById(`bill-upload-${index}`) as HTMLInputElement;
-  fileInput?.click();
-}
-
+  triggerBillUpload(index: number): void {
+    document.getElementById(`bill-upload-${index}`)?.click();
+  }
 }

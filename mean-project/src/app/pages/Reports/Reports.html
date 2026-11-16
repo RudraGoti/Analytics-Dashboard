@@ -1,1 +1,56 @@
-<p>Reports works!</p>
+<section class="reports-page">
+  <div class="report-heading">
+    <div><h2>Reports</h2><p>Review and export your business activity.</p></div>
+    <button type="button" class="download-button" (click)="downloadPdf()" [disabled]="isDownloading || !days.length">
+      {{ isDownloading ? 'Preparing PDF…' : 'Download PDF' }}
+    </button>
+  </div>
+
+  <div class="report-filters cal-range-card">
+    <label class="cal-range-label">Period
+      <select class="cal-range-input" [(ngModel)]="preset" (ngModelChange)="applyPreset()">
+        <option value="this-month">This month</option>
+        <option value="last-month">Last month</option>
+        <option value="last-30-days">Last 30 days</option>
+        <option value="custom">Custom</option>
+      </select>
+    </label>
+    <ng-container *ngIf="preset === 'custom'">
+      <label class="cal-range-label">From <input class="cal-range-input" type="date" [(ngModel)]="range.from"></label>
+      <label class="cal-range-label">To <input class="cal-range-input" type="date" [(ngModel)]="range.to"></label>
+      <button type="button" class="apply-button cal-range-apply" (click)="loadReport()">Apply</button>
+    </ng-container>
+    <span class="range-label">{{ range.from }} — {{ range.to }}</span>
+  </div>
+
+  <p class="report-state" *ngIf="isLoading">Loading report…</p>
+  <p class="report-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+  <div class="kpi-grid">
+    <article><span>Opening balance</span><strong>{{ formatCurrency(totals.openingInHand) }}</strong></article>
+    <article><span>Counter</span><strong>{{ formatCurrency(totals.totalCounter) }}</strong></article>
+    <article><span>Expenses</span><strong>{{ formatCurrency(totals.totalExpenses) }}</strong></article>
+    <article><span>Closing balance</span><strong>{{ formatCurrency(totals.closingInHand) }}</strong></article>
+    <article><span>Transactions</span><strong>{{ totals.transactions }}</strong></article>
+    <article><span>Categories</span><strong>{{ totals.categories }}</strong></article>
+  </div>
+
+  <div class="breakdown-card">
+    <h3>Daily breakdown</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Counter</th><th>Expenses</th><th>Transactions</th><th>Closing balance</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let day of days; let i = index">
+            <td>{{ day.date | date:'dd MMM yyyy' }}</td>
+            <td>{{ formatCurrency(day.counter) }}</td>
+            <td>{{ formatCurrency(day.totalExpense) }}</td>
+            <td>{{ day.transactionCount }}</td>
+            <td>{{ formatCurrency(closingBalance(i)) }}</td>
+          </tr>
+          <tr *ngIf="!isLoading && !days.length"><td colspan="5" class="empty-row">No activity for this range.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

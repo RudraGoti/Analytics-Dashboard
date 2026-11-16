@@ -1,0 +1,8 @@
+:host { display: block; font-family: "Poppins", sans-serif; color: #1e293b; }
+.settings-page { display: flex; flex-direction: column; gap: 18px; }.settings-heading h2 { margin: 0; font-size: 22px; }.settings-heading p { margin: 5px 0 0; color: #64748b; font-size: 13px; }
+.settings-card, .connection-card { background: white; border-radius: 14px; padding: 20px; box-shadow: 0 5px 16px #0f172a0b; }
+.settings-card { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }.settings-card label { display: flex; flex-direction: column; gap: 7px; color: #475569; font-size: 13px; }
+.settings-card input, .settings-card select { border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; font: inherit; color: #1e293b; background: white; }
+.settings-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; grid-column: 1 / -1; }.settings-actions button, .connection-card button { padding: 9px 14px; border-radius: 8px; font: inherit; cursor: pointer; }.save-button { border: 0; color: white; background: #2563eb; }.reset-button, .connection-card button { border: 1px solid #cbd5e1; background: white; color: #334155; }.saved-message { color: #047857; font-size: 12px; }
+.connection-card { display: flex; align-items: center; gap: 14px; }.connection-card div { flex: 1; }.connection-card h3 { margin: 0; font-size: 16px; }.connection-card p { margin: 5px 0 0; color: #64748b; font-size: 12px; }.connected { color: #047857; }.unavailable { color: #b91c1c; }
+@media (max-width: 650px) { .settings-card { grid-template-columns: 1fr; }.connection-card { align-items: flex-start; flex-direction: column; } }

@@ -1,21 +1,23 @@
-import { Component } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { SidebarComponent } from './sidebar';
 
-@Component({
-  selector: 'app-sidebar',
-  templateUrl: './sidebar.component.html',
-  styleUrls: ['./sidebar.component.css']
-})
-export class SidebarComponent {
+describe('SidebarComponent', () => {
+  let component: SidebarComponent;
+  let fixture: ComponentFixture<SidebarComponent>;
 
-  isCollapsed = false;
-  isMobileMenuOpen = false;
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [SidebarComponent],
+      providers: [provideRouter([])],
+    }).compileComponents();
 
-  toggleSidebar() {
-    this.isCollapsed = !this.isCollapsed;
-  }
+    fixture = TestBed.createComponent(SidebarComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
 
-  toggleMobileMenu() {
-    this.isMobileMenuOpen = !this.isMobileMenuOpen;
-  }
-
-}
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});

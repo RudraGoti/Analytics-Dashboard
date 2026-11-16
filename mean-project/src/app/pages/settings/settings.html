@@ -1,1 +1,32 @@
-<p>settings works!</p>
+<section class="settings-page">
+  <div class="settings-heading"><h2>Settings</h2><p>Set business details and defaults for new expense rows.</p></div>
+  <form class="settings-card" (ngSubmit)="save()">
+    <label>Business name<input name="businessName" [(ngModel)]="settings.businessName" required /></label>
+    <label>Default category
+      <select name="defaultCategory" [(ngModel)]="settings.defaultCategory">
+        <option>Product Purchase</option><option>Rent</option><option>Light Bill</option><option>Maintenance</option><option>Petrol</option><option>Other</option>
+      </select>
+    </label>
+    <label>Default payment mode
+      <select name="defaultMode" [(ngModel)]="settings.defaultMode">
+        <option>Cash</option><option>UPI</option><option>Card</option><option>Bank Transfer</option>
+      </select>
+    </label>
+    <label>Default status
+      <select name="defaultStatus" [(ngModel)]="settings.defaultStatus"><option>Paid</option><option>Pending</option></select>
+    </label>
+    <div class="settings-actions">
+      <button type="submit" class="save-button">Save</button>
+      <button type="button" class="reset-button" (click)="reset()">Reset to defaults</button>
+      <span class="saved-message" *ngIf="savedMessage">{{ savedMessage }}</span>
+    </div>
+  </form>
+
+  <section class="connection-card">
+    <div><h3>Server connection</h3><p>Check whether the API and database are available.</p></div>
+    <strong [class.connected]="connectionStatus === 'connected'" [class.unavailable]="connectionStatus === 'unavailable'">
+      {{ connectionStatus === 'checking' ? 'Checking…' : connectionStatus === 'connected' ? 'Connected' : 'Not reachable' }}
+    </strong>
+    <button type="button" (click)="checkServer()">Check again</button>
+  </section>
+</section>

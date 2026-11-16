@@ -22,6 +22,16 @@ export interface PdfReportPayload {
     totalExpense: number;
     closingInHand: number;
   }>;
+  paidPendingSummary: {
+    paidAmount: number;
+    paidCount: number;
+    pendingAmount: number;
+    paidPercentage: number;
+    pendingPercentage: number;
+    pendingCount: number;
+  };
+  paymentModeSummary: Array<{ mode: string; transactions: number; amount: number; percentage: number }>;
+  categoryStatusSummary: Array<{ category: string; paidAmount: number; pendingAmount: number; total: number }>;
   trendChartImage?: string;
 }
 
@@ -314,6 +324,76 @@ export class PdfReportService {
       }
     });
 
+    doc.addPage();
+    reportHeader();
+    y = 28;
+    doc.setFontSize(10);
+    doc.setTextColor(titleColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Additional Expense Breakdowns', this.margin, y);
+    y += 6;
+
+    autoTable(doc, {
+      startY: y,
+      head: [['Status', 'Amount', 'Share', 'Transactions']],
+      body: [
+        ['Paid', this.formatCurrency(payload.paidPendingSummary.paidAmount), `${payload.paidPendingSummary.paidPercentage.toFixed(1)}%`, this.formatNumber(payload.paidPendingSummary.paidCount)],
+        ['Pending', this.formatCurrency(payload.paidPendingSummary.pendingAmount), `${payload.paidPendingSummary.pendingPercentage.toFixed(1)}%`, this.formatNumber(payload.paidPendingSummary.pendingCount)],
+      ],
+      theme: 'grid',
+      styles: { fontSize: 9, textColor, cellPadding: 2 },
+      headStyles: { fillColor: '#f1f5f9', textColor: titleColor, fontStyle: 'bold' },
+      margin: { left: this.margin, right: this.margin },
+    });
+
+    y += 34;
+    doc.setFontSize(9);
+    doc.setTextColor(titleColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Payment Mode Breakdown', this.margin, y);
+    autoTable(doc, {
+      startY: y + 3,
+      head: [['Mode', 'Transactions', 'Amount', 'Share']],
+      body: payload.paymentModeSummary.map((item) => [
+        item.mode,
+        this.formatNumber(item.transactions),
+        this.formatCurrency(item.amount),
+        `${item.percentage.toFixed(1)}%`,
+      ]),
+      theme: 'grid',
+      styles: { fontSize: 9, textColor, cellPadding: 2 },
+      headStyles: { fillColor: '#f1f5f9', textColor: titleColor, fontStyle: 'bold' },
+      margin: { left: this.margin, right: this.margin },
+    });
+
+    y += 49;
+    doc.setFontSize(9);
+    doc.setTextColor(titleColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Category x Status', this.margin, y);
+    autoTable(doc, {
+      startY: y + 3,
+      head: [['Category', 'Paid Amount', 'Pending Amount', 'Total']],
+      body: [
+        ...payload.categoryStatusSummary.map((item) => [
+          item.category,
+          this.formatCurrency(item.paidAmount),
+          this.formatCurrency(item.pendingAmount),
+          this.formatCurrency(item.total),
+        ]),
+        [
+          'Total',
+          this.formatCurrency(payload.categoryStatusSummary.reduce((sum, item) => sum + item.paidAmount, 0)),
+          this.formatCurrency(payload.categoryStatusSummary.reduce((sum, item) => sum + item.pendingAmount, 0)),
+          this.formatCurrency(payload.categoryStatusSummary.reduce((sum, item) => sum + item.total, 0)),
+        ],
+      ],
+      theme: 'grid',
+      styles: { fontSize: 9, textColor, cellPadding: 2 },
+      headStyles: { fillColor: '#f1f5f9', textColor: titleColor, fontStyle: 'bold' },
+      margin: { left: this.margin, right: this.margin },
+    });
+
     const totalPagesFinal = doc.getNumberOfPages();
     for (let i = 1; i <= totalPagesFinal; i++) {
       doc.setPage(i);
@@ -424,6 +504,19 @@ export class PdfReportService {
         })),
         totalExpense: item.totalExpense,
         closingInHand: item.closingInHand,
+      })),
+      paidPendingSummary: { ...payload.paidPendingSummary },
+      paymentModeSummary: payload.paymentModeSummary.map((item) => ({
+        mode: this.sanitizeText(item.mode),
+        transactions: item.transactions,
+        amount: item.amount,
+        percentage: item.percentage,
+      })),
+      categoryStatusSummary: payload.categoryStatusSummary.map((item) => ({
+        category: this.sanitizeText(item.category),
+        paidAmount: item.paidAmount,
+        pendingAmount: item.pendingAmount,
+        total: item.total,
       })),
       trendChartImage: payload.trendChartImage,
     };
