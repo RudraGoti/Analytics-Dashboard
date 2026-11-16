@@ -1,53 +1,59 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ExpenseService } from '../../services/expense.service';
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { forkJoin, Subscription } from 'rxjs';
 import { DateService } from '../../services/date.service';
-import { Subscription } from 'rxjs';
+import { DayComparison, DaySummary, DaySummaryService, MonthSummary } from '../../services/day-summary.service';
+import { ExpenseService } from '../../services/expense.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.css']
+  styleUrls: ['./dashboard.css', './dashboard-details.css'],
 })
 export class Dashboard implements OnInit, OnDestroy {
-
-  selectedDate: string = '';
-  selectedDateDisplay: string = '';
-
-  counter: number = 0;
-  totalExpenses: number = 0;
-  expenseCount: number = 0;
-  categoryCount: number = 0;
-
+  selectedDate = '';
+  selectedDateDisplay = '';
+  selectedMonthDisplay = '';
+  summary!: DaySummary;
+  monthSummary: MonthSummary = { counter: 0, totalExpenses: 0, netPosition: 0 };
+  comparison: DayComparison | null = null;
+  hasPreviousRecord = false;
   recordFound = false;
-  expenses: any[] = [];
-  categorySummary: Array<{ name: string; count: number; color: string }> = [];
-  pieGradient: string = '';
+  isLoading = true;
+  errorMessage = '';
+  statusFilter = '';
+  modeFilter = '';
+  amountSort: 'asc' | 'desc' = 'desc';
+  filteredExpenses: DaySummary['expenses'] = [];
+  filteredExpenseTotal = 0;
 
+  readonly statuses = ['Paid', 'Pending'];
+  readonly modes = ['Cash', 'UPI', 'Card', 'Bank Transfer'];
+  readonly loadingCards = [1, 2, 3, 4];
   private dateSubscription = new Subscription();
+  private loadVersion = 0;
 
   constructor(
     private cd: ChangeDetectorRef,
     private expenseService: ExpenseService,
-    private dateService: DateService
-  ) {}
+    private dateService: DateService,
+    private daySummaryService: DaySummaryService,
+  ) {
+    this.summary = this.daySummaryService.summarize(null);
+  }
 
   ngOnInit(): void {
-
-    this.selectedDate = this.dateService.selectedDate$.getValue();
-    this.selectedDateDisplay = this.formatDateLabel(this.selectedDate);
-
-    this.loadRecord(this.selectedDate);
-
     this.dateSubscription = this.dateService.selectedDate$.subscribe((date) => {
-
       this.selectedDate = date;
       this.selectedDateDisplay = this.formatDateLabel(date);
-
+      this.selectedMonthDisplay = date
+        ? new Date(`${date}T00:00:00`).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
+        : '';
       this.loadRecord(date);
-
     });
   }
 
@@ -55,139 +61,107 @@ export class Dashboard implements OnInit, OnDestroy {
     this.dateSubscription.unsubscribe();
   }
 
-  private loadRecord(date: string): void {
-
-    console.log('Dashboard requesting date:', date);
-
-    this.expenseService.getExpenseByDate(date).subscribe({
-
-      next: (record) => {
-
-        console.log('Dashboard received:', record);
-
-        if (record) {
-
-          this.recordFound = true;
-
-          this.counter = record.counter || 0;
-
-          this.expenseCount = record.expenses?.length || 0;
-
-          this.totalExpenses = (record.expenses || []).reduce(
-            (sum: number, expense: any) =>
-              sum + Number(expense.amount || 0),
-            0
-          );
-
-          this.categoryCount = new Set(
-            (record.expenses || []).map(
-              (expense: any) => expense.category
-            )
-          ).size;
-
-          this.expenses = record.expenses || [];
-          this.categorySummary = this.buildCategorySummary(this.expenses);
-          this.pieGradient = this.buildPieGradient(this.categorySummary);
-
-          try { this.cd.detectChanges(); } catch (e) {}
-        } else {
-
-          this.recordFound = false;
-
-          this.counter = 0;
-          this.totalExpenses = 0;
-          this.expenseCount = 0;
-          this.categoryCount = 0;
-          this.categorySummary = [];
-          this.pieGradient = '';
-          try { this.cd.detectChanges(); } catch (e) {}
-        }
-      },
-
-      error: (err) => {
-
-        console.error('Dashboard fetch error:', err);
-
-        this.recordFound = false;
-        this.expenses = [];
-        this.categorySummary = [];
-        this.pieGradient = '';
-
-        this.counter = 0;
-        this.totalExpenses = 0;
-        this.expenseCount = 0;
-        this.categoryCount = 0;
-        try { this.cd.detectChanges(); } catch (e) {}
-      }
-    });
-  }
-
-  private buildCategorySummary(expenses: any[]): Array<{ name: string; count: number; color: string }> {
-    const counts: Record<string, number> = {};
-    expenses.forEach(expense => {
-      const category = expense.category || 'Other';
-      counts[category] = (counts[category] || 0) + 1;
-    });
-
-    const palette = ['#4f46e5', '#059669', '#dc2626', '#d97706', '#0ea5e9', '#8b5cf6'];
-    return Object.keys(counts).map((category, index) => ({
-      name: category,
-      count: counts[category],
-      color: palette[index % palette.length]
-    }));
-  }
-
-  private buildPieGradient(categorySummary: Array<{ name: string; count: number; color: string }>): string {
-    const total = categorySummary.reduce((sum, item) => sum + item.count, 0);
-    if (!total) {
-      return 'conic-gradient(#e5e7eb 0deg 360deg)';
-    }
-
-    let startAngle = 0;
-    const segments = categorySummary.map(item => {
-      const portion = (item.count / total) * 360;
-      const segment = `${item.color} ${startAngle}deg ${startAngle + portion}deg`;
-      startAngle += portion;
-      return segment;
-    });
-
-    return `conic-gradient(${segments.join(', ')})`;
-  }
-
-  private formatDateLabel(date: string): string {
-
+  loadRecord(date = this.selectedDate): void {
     if (!date) {
-      return 'Selected Date';
+      this.errorMessage = 'Could not load data';
+      this.isLoading = false;
+      this.cd.markForCheck();
+      return;
     }
 
-    return new Date(date).toLocaleDateString('en-GB', {
+    const requestVersion = ++this.loadVersion;
+    const previousDate = this.shiftDate(date, -1);
+    const firstOfMonth = `${date.slice(0, 7)}-01`;
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.cd.markForCheck();
+
+    forkJoin({
+      current: this.expenseService.getExpenseByDate(date),
+      previous: this.expenseService.getExpenseByDate(previousDate),
+      month: this.expenseService.getExpensesByDateRange(firstOfMonth, date),
+    }).subscribe({
+      next: ({ current, previous, month }) => {
+        if (requestVersion !== this.loadVersion || this.selectedDate !== date) {
+          return;
+        }
+
+        this.recordFound = current !== null && current !== undefined;
+        this.summary = this.daySummaryService.summarize(current);
+        this.hasPreviousRecord = previous !== null && previous !== undefined;
+        this.comparison = this.hasPreviousRecord
+          ? this.daySummaryService.compare(this.summary, this.daySummaryService.summarize(previous))
+          : null;
+        this.monthSummary = this.daySummaryService.summarizeMonth(month);
+        this.applyExpenseFilters();
+        this.isLoading = false;
+        this.cd.markForCheck();
+      },
+      error: (error) => {
+        if (requestVersion !== this.loadVersion || this.selectedDate !== date) {
+          return;
+        }
+        console.error('Failed to load dashboard day summary', error);
+        this.errorMessage = 'Could not load data';
+        this.isLoading = false;
+        this.cd.markForCheck();
+      },
+    });
+  }
+
+  retryLoad(): void {
+    this.loadRecord();
+  }
+
+  applyExpenseFilters(): void {
+    const result = this.daySummaryService.filterExpenses(
+      this.summary.expenses,
+      this.statusFilter,
+      this.modeFilter,
+      this.amountSort,
+    );
+    this.filteredExpenses = result.expenses;
+    this.filteredExpenseTotal = result.total;
+  }
+
+  toggleAmountSort(): void {
+    this.amountSort = this.amountSort === 'desc' ? 'asc' : 'desc';
+    this.applyExpenseFilters();
+  }
+
+  formatCurrency(amount: number): string {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(amount);
+  }
+
+  formatDateLabel(date: string): string {
+    if (!date) {
+      return 'Selected date';
+    }
+    return new Date(`${date}T00:00:00`).toLocaleDateString('en-IN', {
       day: 'numeric',
       month: 'long',
-      year: 'numeric'
+      year: 'numeric',
     });
   }
 
-  getStatusBadgeText(expense: any): string {
-    const mode = expense.mode?.toLowerCase();
-    const status = expense.status?.toLowerCase();
-
-    if (status === 'pending') {
-      return 'pending';
-    }
-
-    if (mode === 'cash') {
-      return 'cash';
-    }
-
-    if (mode === 'upi' || mode === 'card' || mode === 'bank transfer' || mode === 'online') {
-      return 'online';
-    }
-
-    return status || 'pending';
+  formatPercentage(value: number): string {
+    return `${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(value)}%`;
   }
 
-  getStatusBadgeClass(expense: any): string {
-    const text = this.getStatusBadgeText(expense);
-    return text === 'pending' ? 'pending' : 'paid';
+  getComparison(key: keyof DayComparison): DayComparison[keyof DayComparison] | null {
+    return this.comparison?.[key] || null;
+  }
+
+  private shiftDate(date: string, days: number): string {
+    const [year, month, day] = date.split('-').map(Number);
+    const shifted = new Date(year, month - 1, day + days);
+    const nextYear = shifted.getFullYear();
+    const nextMonth = String(shifted.getMonth() + 1).padStart(2, '0');
+    const nextDay = String(shifted.getDate()).padStart(2, '0');
+    return `${nextYear}-${nextMonth}-${nextDay}`;
   }
 }

@@ -1,112 +1,314 @@
 <div class="dashboard-container">
-
-  <div class="summary-grid">
-    <div class="dash-card card-1">
-      <div class="card-left">
-        <div class="card-title">Counter</div>
-        <div class="card-amount">₹ {{ counter | number:'1.0-0' }}</div>
-        <div class="card-entries">{{ expenseCount }} entries</div>
+  <ng-container *ngIf="isLoading; else dashboardState">
+    <section class="summary-grid" aria-label="Loading daily summary">
+      <div class="dash-card skeleton-card" *ngFor="let card of loadingCards">
+        <span class="skeleton-line skeleton-label"></span>
+        <span class="skeleton-line skeleton-value"></span>
+        <span class="skeleton-line skeleton-meta"></span>
       </div>
-      <div class="card-right">
-        <span class="material-icons">today</span>
-      </div>
+    </section>
+    <div class="loading-panels">
+      <div class="panel skeleton-panel" *ngFor="let card of [1, 2, 3, 4]"></div>
     </div>
+  </ng-container>
 
-    <div class="dash-card card-2">
-      <div class="card-left">
-        <div class="card-title">Total Expense</div>
-        <div class="card-amount">₹ {{ totalExpenses | number:'1.0-0' }}</div>
-        <div class="card-entries">{{ expenseCount }} transaction(s)</div>
-      </div>
-      <div class="card-right">
-        <span class="material-icons">payments</span>
-      </div>
-    </div>
-
-    <div class="dash-card card-3">
-      <div class="card-left">
-        <div class="card-title">Transactions</div>
-        <div class="card-amount">{{ expenseCount }}</div>
-        <div class="card-entries">Entries recorded</div>
-      </div>
-      <div class="card-right">
-        <span class="material-icons">calendar_month</span>
-      </div>
-    </div>
-
-    <div class="dash-card card-4">
-      <div class="card-left">
-        <div class="card-title">Categories Used</div>
-        <div class="card-amount">{{ categoryCount }}</div>
-        <div class="card-entries">Active categories</div>
-      </div>
-      <div class="card-right">
-        <span class="material-icons">category</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="dashboard-main">
-    <section class="panel chart-panel">
-      <div class="panel-header">
+  <ng-template #dashboardState>
+    <ng-container *ngIf="errorMessage; else dashboardContent">
+      <section class="notice error-notice" role="alert">
+        <span class="material-icons">error_outline</span>
         <div>
-          <div class="panel-title">Category Pie Chart</div>
+          <strong>{{ errorMessage }}</strong>
+          <p>Check your connection and try loading the selected date again.</p>
         </div>
-      </div>
+        <button type="button" class="primary-button" (click)="retryLoad()">Try again</button>
+      </section>
+    </ng-container>
+  </ng-template>
 
-      <div class="chart-content">
-        <div class="pie-chart" [style.background]="pieGradient">
-          <div class="pie-center">
-            <span>{{ categoryCount }}</span>
-            <small>Categories</small>
-          </div>
+  <ng-template #dashboardContent>
+    <section class="notice empty-day-notice" *ngIf="!recordFound">
+      <span class="material-icons">event_available</span>
+      <div>
+        <strong>No entry for {{ selectedDateDisplay }}</strong>
+        <p>There is no saved counter or expense record for this date yet.</p>
+      </div>
+      <a class="primary-button" routerLink="/AddExpense">Add entry for this date</a>
+    </section>
+
+    <section class="summary-grid" aria-label="Selected day summary">
+      <article class="dash-card card-counter">
+        <div class="card-icon"><span class="material-icons">point_of_sale</span></div>
+        <div class="card-title">Counter</div>
+        <strong class="card-amount">{{ formatCurrency(summary.counter) }}</strong>
+        <div class="card-entries">Sales for the selected day</div>
+        <div class="comparison-line" *ngIf="getComparison('counter') as change"
+          [ngClass]="change.tone">
+          <span>{{ change.direction === 'up' ? '↗' : '↘' }}</span>
+          {{ change.isNew ? 'New vs yesterday' : (change.percentage | number:'1.0-0') + '% vs yesterday' }}
         </div>
-        <div class="chart-legend">
-          <div class="legend-item" *ngFor="let category of categorySummary">
-            <span class="legend-color" [style.background]="category.color"></span>
-            <div>
-              <div class="legend-name">{{ category.name }}</div>
-              <div class="legend-value">{{ category.count }} entries</div>
+      </article>
+
+      <article class="dash-card card-expenses">
+        <div class="card-icon"><span class="material-icons">receipt_long</span></div>
+        <div class="card-title">Total expenses</div>
+        <strong class="card-amount">{{ formatCurrency(summary.totalExpenses) }}</strong>
+        <div class="card-entries">{{ summary.expenseCount }} transaction(s)</div>
+        <div class="comparison-line" *ngIf="getComparison('totalExpenses') as change"
+          [ngClass]="change.tone">
+          <span>{{ change.direction === 'up' ? '↗' : '↘' }}</span>
+          {{ change.isNew ? 'New vs yesterday' : (change.percentage | number:'1.0-0') + '% vs yesterday' }}
+        </div>
+      </article>
+
+      <article class="dash-card card-net" [class.negative]="summary.netPosition < 0">
+        <div class="card-icon"><span class="material-icons">account_balance_wallet</span></div>
+        <div class="card-title">Net position</div>
+        <strong class="card-amount">{{ formatCurrency(summary.netPosition) }}</strong>
+        <div class="card-entries">Counter minus expenses</div>
+        <div class="comparison-line" *ngIf="getComparison('netPosition') as change"
+          [ngClass]="change.tone">
+          <span>{{ change.direction === 'up' ? '↗' : '↘' }}</span>
+          {{ change.isNew ? 'New vs yesterday' : (change.percentage | number:'1.0-0') + '% vs yesterday' }}
+        </div>
+      </article>
+
+      <article class="dash-card card-pending" [class.has-pending]="summary.pendingTotal > 0">
+        <div class="card-icon"><span class="material-icons">pending_actions</span></div>
+        <div class="card-title">Pending amount</div>
+        <strong class="card-amount">{{ formatCurrency(summary.pendingTotal) }}</strong>
+        <div class="card-entries">{{ summary.pendingCount }} pending transaction(s)</div>
+        <div class="comparison-line" *ngIf="getComparison('pendingTotal') as change"
+          [ngClass]="change.tone">
+          <span>{{ change.direction === 'up' ? '↗' : '↘' }}</span>
+          {{ change.isNew ? 'New vs yesterday' : (change.percentage | number:'1.0-0') + '% vs yesterday' }}
+        </div>
+      </article>
+
+    </section>
+
+    <section class="dashboard-panels">
+      <article class="panel">
+        <header class="panel-header">
+          <div>
+            <h2>Paid vs Pending</h2>
+            <p>Expense amounts for {{ selectedDateDisplay }}</p>
+          </div>
+          <span class="material-icons panel-heading-icon">donut_small</span>
+        </header>
+        <div class="panel-content">
+          <div class="status-amounts">
+            <div class="status-amount paid-text">
+              <span class="status-dot"></span>
+              <span>Paid</span>
+              <strong>{{ formatCurrency(summary.paidTotal) }}</strong>
+              <small>{{ formatPercentage(summary.paidPercentage) }}</small>
+            </div>
+            <div class="status-amount pending-text">
+              <span class="status-dot"></span>
+              <span>Pending</span>
+              <strong>{{ formatCurrency(summary.pendingTotal) }}</strong>
+              <small>{{ formatPercentage(summary.pendingPercentage) }}</small>
+            </div>
+          </div>
+          <div class="stacked-track" role="img"
+            [attr.aria-label]="'Paid ' + formatPercentage(summary.paidPercentage) + ', Pending ' + formatPercentage(summary.pendingPercentage)">
+            <span class="stacked-fill paid-fill" [style.width.%]="summary.paidPercentage"></span>
+            <span class="stacked-fill pending-fill" [style.width.%]="summary.pendingPercentage"></span>
+          </div>
+          <p class="chart-footnote">{{ summary.expenseCount }} total transaction(s)</p>
+        </div>
+      </article>
+
+      <article class="panel category-panel">
+        <header class="panel-header">
+          <div>
+            <h2>Expenses by category</h2>
+            <p>Share of total expense by amount</p>
+          </div>
+          <span class="material-icons panel-heading-icon">pie_chart</span>
+        </header>
+        <div class="panel-content category-content">
+          <div class="donut-chart" [style.background]="summary.pieGradient">
+            <div class="donut-center">
+              <small>Total expense</small>
+              <strong>{{ formatCurrency(summary.totalExpenses) }}</strong>
+            </div>
+          </div>
+          <div class="category-legend" *ngIf="summary.categories.length; else noCategoryData">
+            <div class="category-legend-row" *ngFor="let category of summary.categories">
+              <span class="legend-color" [style.background]="category.color"></span>
+              <span class="legend-name"><span>{{ category.icon }}</span>{{ category.name }}</span>
+              <strong>{{ formatCurrency(category.amount) }}</strong>
+              <small>{{ formatPercentage(category.percentage) }} · {{ category.count }}</small>
+            </div>
+          </div>
+          <ng-template #noCategoryData>
+            <p class="panel-empty">No category expenses for this date.</p>
+          </ng-template>
+        </div>
+      </article>
+
+      <article class="panel">
+        <header class="panel-header">
+          <div>
+            <h2>Payment modes</h2>
+            <p>Amount and share by payment method</p>
+          </div>
+          <span class="material-icons panel-heading-icon">payments</span>
+        </header>
+        <div class="panel-content mode-list">
+          <div class="mode-row" *ngFor="let mode of summary.modes; let i = index">
+            <div class="mode-heading">
+              <span><i class="mode-dot" [ngClass]="'mode-' + i"></i>{{ mode.name }}</span>
+              <strong>{{ formatCurrency(mode.amount) }}</strong>
+            </div>
+            <div class="mode-track">
+              <span [ngClass]="'mode-fill mode-fill-' + i" [style.width.%]="mode.percentage"></span>
+            </div>
+            <div class="mode-meta">
+              <span>{{ formatPercentage(mode.percentage) }} share</span>
+              <span>{{ mode.count }} transaction(s)</span>
             </div>
           </div>
         </div>
+      </article>
+
+      <article class="panel highlights-panel">
+        <header class="panel-header">
+          <div>
+            <h2>Highlights</h2>
+            <p>Key details from the selected day</p>
+          </div>
+          <span class="material-icons panel-heading-icon">insights</span>
+        </header>
+        <div class="panel-content highlight-list">
+          <div class="largest-expense">
+            <span class="highlight-label">Largest expense</span>
+            <ng-container *ngIf="summary.largestExpense; else noLargestExpense">
+              <div class="largest-title">
+                <span>{{ summary.largestExpense.categoryIcon }}</span>
+                <strong>{{ summary.largestExpense.title || summary.largestExpense.category }}</strong>
+              </div>
+              <div class="largest-meta">
+                <span>{{ summary.largestExpense.category }}</span>
+                <strong>{{ formatCurrency(summary.largestExpense.amount) }}</strong>
+              </div>
+            </ng-container>
+            <ng-template #noLargestExpense><span class="muted-value">No expenses recorded</span></ng-template>
+          </div>
+
+          <div class="cash-digital">
+            <div>
+              <span class="highlight-label">Cash</span>
+              <strong>{{ formatCurrency(summary.cashAmount) }}</strong>
+              <small>{{ formatPercentage(summary.cashPercentage) }} of expenses</small>
+            </div>
+            <div>
+              <span class="highlight-label">Digital</span>
+              <strong>{{ formatCurrency(summary.digitalAmount) }}</strong>
+              <small>UPI + Card + Bank Transfer · {{ formatPercentage(summary.digitalPercentage) }}</small>
+            </div>
+          </div>
+
+          <div class="ratio-summary">
+            <div class="ratio-heading">
+              <span class="highlight-label">Expense-to-counter ratio</span>
+              <strong [ngClass]="summary.expenseCounterTone">{{ formatPercentage(summary.expenseCounterRatio) }}</strong>
+            </div>
+            <div class="ratio-track">
+              <span [ngClass]="summary.expenseCounterTone" [style.width.%]="summary.expenseCounterProgress"></span>
+            </div>
+            <small>Expenses as a share of counter sales</small>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel month-panel">
+      <header class="panel-header">
+        <div>
+          <h2>Month to date</h2>
+          <p>{{ selectedMonthDisplay }} · through {{ selectedDateDisplay }}</p>
+        </div>
+        <span class="material-icons panel-heading-icon">calendar_month</span>
+      </header>
+      <div class="month-strip">
+        <div><span>Counter</span><strong>{{ formatCurrency(monthSummary.counter) }}</strong></div>
+        <div><span>Total expenses</span><strong>{{ formatCurrency(monthSummary.totalExpenses) }}</strong></div>
+        <div><span>Net so far</span><strong [class.negative-text]="monthSummary.netPosition < 0">
+          {{ formatCurrency(monthSummary.netPosition) }}</strong></div>
       </div>
     </section>
 
-    <section class="panel entries-panel">
-      <div class="panel-header">
+    <section class="panel expenses-panel">
+      <header class="panel-header expenses-header">
         <div>
-          <div class="panel-title">Bill Entries</div>
+          <h2>All expenses of the day</h2>
+          <p>{{ summary.expenseCount }} transaction(s) recorded</p>
         </div>
-      </div>
-
-      <div class="entries-table-wrap">
-        <table class="entries-table">
+        <div class="expense-filters">
+          <label>
+            <span>Status</span>
+            <select [(ngModel)]="statusFilter" (ngModelChange)="applyExpenseFilters()">
+              <option value="">All statuses</option>
+              <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
+            </select>
+          </label>
+          <label>
+            <span>Mode</span>
+            <select [(ngModel)]="modeFilter" (ngModelChange)="applyExpenseFilters()">
+              <option value="">All modes</option>
+              <option *ngFor="let mode of modes" [value]="mode">{{ mode }}</option>
+            </select>
+          </label>
+        </div>
+      </header>
+      <div class="table-wrap">
+        <table class="expenses-table">
           <thead>
             <tr>
               <th>Title</th>
               <th>Category</th>
-              <th>Amount</th>
+              <th>
+                <button class="sort-button" type="button" (click)="toggleAmountSort()"
+                  [attr.aria-sort]="amountSort === 'asc' ? 'ascending' : 'descending'">
+                  Amount <span class="material-icons">{{ amountSort === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</span>
+                </button>
+              </th>
               <th>Status</th>
+              <th>Mode</th>
+              <th>Description</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let expense of expenses; let i = index" [hidden]="i >= 5">
-              <td>{{ expense.title }}</td>
-              <td>{{ expense.category }}</td>
-              <td>₹ {{ expense.amount | number:'1.0-0' }}</td>
+            <tr *ngFor="let expense of filteredExpenses">
+              <td class="expense-title-cell">{{ expense.title || 'Untitled expense' }}</td>
+              <td><span class="table-category-icon">{{ expense.categoryIcon }}</span>{{ expense.category }}</td>
+              <td class="amount-cell">{{ formatCurrency(expense.amount) }}</td>
               <td>
-                <span class="status-badge" [ngClass]="getStatusBadgeClass(expense)">
-                  {{ getStatusBadgeText(expense) }}
+                <span class="status-badge" [ngClass]="expense.status === 'Paid' ? 'paid' : 'pending'">
+                  {{ expense.status }}
                 </span>
+                <span class="attention-badge" *ngIf="expense.status === 'Pending'">Needs attention</span>
+              </td>
+              <td>{{ expense.mode }}</td>
+              <td class="description-cell">{{ expense.description || '—' }}</td>
+            </tr>
+            <tr *ngIf="filteredExpenses.length === 0">
+              <td colspan="6" class="table-empty">
+                {{ summary.expenseCount ? 'No expenses match these filters.' : 'No expenses recorded for this date.' }}
               </td>
             </tr>
-            <tr *ngIf="!expenses || expenses.length === 0">
-              <td colspan="4" class="empty-state">No entries found for this date.</td>
-            </tr>
           </tbody>
+          <tfoot>
+            <tr>
+              <th colspan="2">Total shown</th>
+              <th>{{ formatCurrency(filteredExpenseTotal) }}</th>
+              <th colspan="3">{{ filteredExpenses.length }} transaction(s)</th>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </section>
-  </div>
+  </ng-template>
 </div>

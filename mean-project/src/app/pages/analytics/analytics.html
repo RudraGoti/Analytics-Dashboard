@@ -1,166 +1,475 @@
-<div class="dashboard-container">
-  <div class="summary-grid">
-    <div class="dash-card card-1">
-      <div class="card-left">
-        <div class="card-title">Counter</div>
-        <div class="card-amount">{{ formatNumber(summary.totalCounter) }}</div>
-        <div class="card-entries">Total counter</div>
+<div class="dashboard-container analytics-page">
+  <section class="kpi-grid" aria-label="Analytics overview">
+    <article class="kpi-card">
+      <div class="kpi-card-top">
+        <div class="kpi-icon counter-icon"><span class="material-icons">point_of_sale</span></div>
+        <button class="kpi-menu" type="button" aria-label="Counter options">⋯</button>
       </div>
-      <div class="card-right">
-        <span class="material-icons">today</span>
-      </div>
-    </div>
+      <div class="kpi-label">Total Counter <span>(sales)</span></div>
+      <ng-container *ngIf="isLoading; else counterKpi">
+        <div class="kpi-skeleton"></div>
+      </ng-container>
+      <ng-template #counterKpi>
+        <div *ngIf="errorMessage" class="kpi-error">{{ errorMessage }}</div>
+        <div *ngIf="!errorMessage && !hasRangeData" class="kpi-no-data">No data for this period</div>
+        <ng-container *ngIf="!errorMessage && hasRangeData">
+          <strong class="kpi-value">{{ formatCurrency(analyticsData.totalCounter) }}</strong>
+          <div class="kpi-change" *ngIf="kpiChanges.counter as change"
+            [class.positive]="change.tone === 'positive'" [class.negative]="change.tone === 'negative'"
+            [class.neutral]="change.tone === 'neutral'">
+            <span>{{ change.direction === 'up' ? '↗' : '↘' }}</span>
+            {{ change.isNew ? 'New vs previous range' : (change.percentage | number:'1.0-0') + '% vs previous range' }}
+          </div>
+        </ng-container>
+      </ng-template>
+    </article>
 
-    <div class="dash-card card-2">
-      <div class="card-left">
-        <div class="card-title">Total Expense</div>
-        <div class="card-amount">₹ {{ formatNumber(summary.totalExpenses) }}</div>
-        <div class="card-entries">Total expenses</div>
+    <article class="kpi-card">
+      <div class="kpi-card-top">
+        <div class="kpi-icon expense-icon"><span class="material-icons">payments</span></div>
+        <button class="kpi-menu" type="button" aria-label="Expense options">⋯</button>
       </div>
-      <div class="card-right">
-        <span class="material-icons">payments</span>
-      </div>
-    </div>
+      <div class="kpi-label">Total Expenses</div>
+      <ng-container *ngIf="isLoading; else expensesKpi">
+        <div class="kpi-skeleton"></div>
+      </ng-container>
+      <ng-template #expensesKpi>
+        <div *ngIf="errorMessage" class="kpi-error">{{ errorMessage }}</div>
+        <div *ngIf="!errorMessage && !hasRangeData" class="kpi-no-data">No data for this period</div>
+        <ng-container *ngIf="!errorMessage && hasRangeData">
+          <strong class="kpi-value">{{ formatCurrency(analyticsData.totalExpense) }}</strong>
+          <div class="kpi-change" *ngIf="kpiChanges.expenses as change"
+            [class.positive]="change.tone === 'positive'" [class.negative]="change.tone === 'negative'"
+            [class.neutral]="change.tone === 'neutral'">
+            <span>{{ change.direction === 'up' ? '↗' : '↘' }}</span>
+            {{ change.isNew ? 'New vs previous range' : (change.percentage | number:'1.0-0') + '% vs previous range' }}
+          </div>
+        </ng-container>
+      </ng-template>
+    </article>
 
-    <div class="dash-card card-3">
-      <div class="card-left">
-        <div class="card-title">Transactions</div>
-        <div class="card-amount">{{ formatNumber(summary.totalTransactions) }}</div>
-        <div class="card-entries">Total transactions</div>
+    <article class="kpi-card">
+      <div class="kpi-card-top">
+        <div class="kpi-icon inhand-icon"><span class="material-icons">account_balance_wallet</span></div>
+        <button class="kpi-menu" type="button" aria-label="In Hand options">⋯</button>
       </div>
-      <div class="card-right">
-        <span class="material-icons">calendar_month</span>
-      </div>
-    </div>
+      <div class="kpi-label">In Hand <span>(closing balance)</span></div>
+      <ng-container *ngIf="isLoading; else inHandKpi">
+        <div class="kpi-skeleton"></div>
+      </ng-container>
+      <ng-template #inHandKpi>
+        <div *ngIf="errorMessage" class="kpi-error">{{ errorMessage }}</div>
+        <div *ngIf="!errorMessage && !hasRangeData" class="kpi-no-data">No data for this period</div>
+        <ng-container *ngIf="!errorMessage && hasRangeData">
+          <strong class="kpi-value">{{ formatCurrency(analyticsData.closingBalance) }}</strong>
+          <div class="kpi-change" *ngIf="kpiChanges.inHand as change"
+            [class.positive]="change.tone === 'positive'" [class.negative]="change.tone === 'negative'"
+            [class.neutral]="change.tone === 'neutral'">
+            <span>{{ change.direction === 'up' ? '↗' : '↘' }}</span>
+            {{ change.isNew ? 'New vs previous range' : (change.percentage | number:'1.0-0') + '% vs previous range' }}
+          </div>
+        </ng-container>
+      </ng-template>
+    </article>
 
-    <div class="dash-card card-4">
-      <div class="card-left">
-        <div class="card-title">Categories Used</div>
-        <div class="card-amount">{{ formatNumber(summary.totalCategories) }}</div>
-        <div class="card-entries">Active categories</div>
+    <article class="kpi-card">
+      <div class="kpi-card-top">
+        <div class="kpi-icon pending-icon"><span class="material-icons">schedule</span></div>
+        <button class="kpi-menu" type="button" aria-label="Pending options">⋯</button>
       </div>
-      <div class="card-right">
-        <span class="material-icons">category</span>
-      </div>
-    </div>
+      <div class="kpi-label">Pending Amount</div>
+      <ng-container *ngIf="isLoading; else pendingKpi">
+        <div class="kpi-skeleton"></div>
+      </ng-container>
+      <ng-template #pendingKpi>
+        <div *ngIf="errorMessage" class="kpi-error">{{ errorMessage }}</div>
+        <div *ngIf="!errorMessage && !hasRangeData" class="kpi-no-data">No data for this period</div>
+        <ng-container *ngIf="!errorMessage && hasRangeData">
+          <strong class="kpi-value">{{ formatCurrency(analyticsData.pendingTotal) }}</strong>
+          <div class="kpi-change" *ngIf="kpiChanges.pending as change"
+            [class.positive]="change.tone === 'positive'" [class.negative]="change.tone === 'negative'"
+            [class.neutral]="change.tone === 'neutral'">
+            <span>{{ change.direction === 'up' ? '↗' : '↘' }}</span>
+            {{ change.isNew ? 'New vs previous range' : (change.percentage | number:'1.0-0') + '% vs previous range' }}
+          </div>
+        </ng-container>
+      </ng-template>
+    </article>
+  </section>
+
+  <div class="comparison-note" *ngIf="!isLoading && !errorMessage && comparisonErrorMessage">
+    {{ comparisonErrorMessage }}
   </div>
 
-  <div class="dashboard-main">
-    <section class="panel chart-panel">
-      <div class="panel-header">
+  <section class="filter-panel panel">
+    <div class="filter-heading">
+      <div>
+        <h2>Expense filters</h2>
+        <p>Filters apply to expense cards and breakdowns. The trend chart remains unfiltered.</p>
+      </div>
+      <span class="filter-count">{{ formatNumber(analyticsData.matchedExpenses.length) }} matching expenses</span>
+    </div>
+    <div class="filter-controls">
+      <label>
+        <span>Category</span>
+        <select [(ngModel)]="filters.category" (ngModelChange)="applyFilters()">
+          <option value="">All categories</option>
+          <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+        </select>
+      </label>
+      <label>
+        <span>Status</span>
+        <select [(ngModel)]="filters.status" (ngModelChange)="applyFilters()">
+          <option value="">All statuses</option>
+          <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
+        </select>
+      </label>
+      <label>
+        <span>Mode</span>
+        <select [(ngModel)]="filters.mode" (ngModelChange)="applyFilters()">
+          <option value="">All modes</option>
+          <option *ngFor="let mode of modes" [value]="mode">{{ mode }}</option>
+        </select>
+      </label>
+      <label class="search-filter">
+        <span>Title or description</span>
+        <input type="search" [(ngModel)]="filters.search" (ngModelChange)="applyFilters()" placeholder="Search expenses">
+      </label>
+      <button class="clear-filters-button" type="button" (click)="clearFilters()">Clear filters</button>
+    </div>
+  </section>
+
+  <div class="visualization-grid">
+    <section class="panel area-chart-card" #trendChart>
+      <div class="card-heading chart-heading">
         <div>
-          <div class="panel-title">Trend Overview</div>
-          <div class="panel-subtitle">Counter, Expense, and In Hand across the selected date range</div>
+          <h2>Counter vs Expense</h2>
+          <p>Opening balance {{ formatCurrency(openingInHand) }} <span class="heading-dot">·</span>
+            Closing balance {{ formatCurrency(analyticsData.closingBalance) }}</p>
         </div>
-        <div class="chart-legend">
-          <div class="legend-item" *ngFor="let series of chartSeries">
-            <span class="legend-color" [style.background]="series.color"></span>
-            <div>
-              <div class="legend-name">{{ series.label }}</div>
+        <div class="chart-heading-actions">
+          <div class="chart-legend">
+            <span><i class="legend-dot counter-dot"></i>Counter</span>
+            <span><i class="legend-dot expense-dot"></i>Expense</span>
+          </div>
+          <span class="range-pill"><span class="material-icons">date_range</span>{{ formatRangeLabel() }}</span>
+          <button class="pdf-button" type="button" (click)="downloadReport()" [disabled]="isGeneratingPdf || isLoading">
+            <span class="material-icons">picture_as_pdf</span>
+            {{ isGeneratingPdf ? 'Preparing…' : 'Download PDF' }}
+          </button>
+        </div>
+      </div>
+      <p class="pdf-status" *ngIf="pdfMessage">{{ pdfMessage }}</p>
+
+      <ng-container *ngIf="isLoading; else areaChartState">
+        <div class="chart-skeleton skeleton-block"></div>
+      </ng-container>
+      <ng-template #areaChartState>
+        <ng-container *ngIf="errorMessage || !hasRangeData; else areaChartContent">
+          <div class="empty-state" [class.error-state]="!!errorMessage">
+            {{ errorMessage || 'No data for this period' }}
+          </div>
+        </ng-container>
+      </ng-template>
+      <ng-template #areaChartContent>
+        <div class="chart-frame">
+          <svg class="area-chart" [attr.viewBox]="areaChart.viewBox" preserveAspectRatio="none"
+            role="img" aria-label="Counter and expense trend">
+            <defs>
+              <linearGradient id="counterAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--analytics-counter)" stop-opacity=".28" />
+                <stop offset="100%" stop-color="var(--analytics-counter)" stop-opacity="0" />
+              </linearGradient>
+              <linearGradient id="expenseAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--analytics-expense)" stop-opacity=".22" />
+                <stop offset="100%" stop-color="var(--analytics-expense)" stop-opacity="0" />
+              </linearGradient>
+              <linearGradient id="counterLineGradient" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="var(--analytics-purple)" />
+                <stop offset="100%" stop-color="var(--analytics-accent-light)" />
+              </linearGradient>
+            </defs>
+            <g *ngFor="let tick of areaChart.ticks">
+              <line class="chart-grid-line" x1="62" x2="776" [attr.y1]="tick.y" [attr.y2]="tick.y"></line>
+              <text class="chart-axis-label" x="52" [attr.y]="tick.y + 4" text-anchor="end">{{ tick.label }}</text>
+            </g>
+            <path class="area-fill" [attr.d]="areaChart.counter.areaPath" fill="url(#counterAreaGradient)"></path>
+            <path class="area-fill" [attr.d]="areaChart.expense.areaPath" fill="url(#expenseAreaGradient)"></path>
+            <path class="area-line counter-line" [attr.d]="areaChart.counter.linePath" stroke="url(#counterLineGradient)"></path>
+            <path class="area-line expense-line" [attr.d]="areaChart.expense.linePath" stroke="var(--analytics-expense)"></path>
+            <g *ngFor="let point of areaChart.counter.points">
+              <circle class="chart-glow counter-glow" [attr.cx]="point.x" [attr.cy]="point.y" r="8"></circle>
+              <circle class="chart-point counter-point" [attr.cx]="point.x" [attr.cy]="point.y" r="3.5"
+                (mouseenter)="showTooltip(point.record, $event)" (mouseleave)="hideTooltip()"></circle>
+            </g>
+            <g *ngFor="let point of areaChart.expense.points">
+              <circle class="chart-glow expense-glow" [attr.cx]="point.x" [attr.cy]="point.y" r="8"></circle>
+              <circle class="chart-point expense-point" [attr.cx]="point.x" [attr.cy]="point.y" r="3.5"
+                (mouseenter)="showTooltip(point.record, $event)" (mouseleave)="hideTooltip()"></circle>
+            </g>
+            <g *ngFor="let label of areaChart.labels">
+              <text class="chart-axis-label chart-day-label" [attr.x]="label.x" [attr.y]="areaChart.plotBottom + 24"
+                text-anchor="middle">{{ label.label }}</text>
+            </g>
+          </svg>
+          <div class="chart-tooltip" *ngIf="tooltip.visible" [style.left.px]="tooltip.x" [style.top.px]="tooltip.y">
+            <strong>{{ tooltip.date }}</strong>
+            <span><i class="legend-dot counter-dot"></i>Counter {{ tooltip.counter }}</span>
+            <span><i class="legend-dot expense-dot"></i>Expense {{ tooltip.expense }}</span>
+            <span><i class="legend-dot inhand-dot"></i>In Hand {{ tooltip.inHand }}</span>
+          </div>
+        </div>
+      </ng-template>
+    </section>
+
+    <section class="panel gauge-card">
+      <div class="card-heading">
+        <div><h2>Expense Ratio</h2><p>Expenses as a share of counter</p></div>
+      </div>
+      <ng-container *ngIf="isLoading; else gaugeState">
+        <div class="gauge-skeleton skeleton-block"></div>
+      </ng-container>
+      <ng-template #gaugeState>
+        <ng-container *ngIf="errorMessage || !hasRangeData; else gaugeContent">
+          <div class="empty-state compact-empty" [class.error-state]="!!errorMessage">
+            {{ errorMessage || 'No data for this period' }}
+          </div>
+        </ng-container>
+      </ng-template>
+      <ng-template #gaugeContent>
+        <div class="gauge-wrap">
+          <svg class="ratio-gauge" viewBox="0 0 200 112" role="img" aria-label="Expense ratio gauge">
+            <path class="gauge-track" [attr.d]="gaugeGeometry.trackPath"></path>
+            <path class="gauge-progress" [attr.d]="gaugeGeometry.progressPath"
+              [attr.stroke]="gaugeGeometry.color"
+              [style.stroke-dasharray]="gaugeGeometry.progressLength + ' ' + gaugeGeometry.circumference"></path>
+          </svg>
+          <div class="gauge-value">
+            <strong>{{ gaugeGeometry.displayPercentage | number:'1.0-0' }}%</strong>
+            <span>Since start of range</span>
+          </div>
+        </div>
+        <div class="gauge-stats">
+          <div><span class="stat-dot counter-dot"></span><span>Average daily counter</span><strong>{{ formatCurrency(analyticsData.averageDailyCounter) }}</strong></div>
+          <div><span class="stat-dot expense-dot"></span><span>Average daily expense</span><strong>{{ formatCurrency(analyticsData.averageDailyExpense) }}</strong></div>
+        </div>
+      </ng-template>
+    </section>
+  </div>
+
+  <div class="bottom-grid">
+    <section class="panel breakdown-card status-card">
+      <div class="card-heading">
+        <div><h2>Paid vs Pending</h2><p>Expense status and totals</p></div>
+      </div>
+      <ng-container *ngIf="isLoading; else statusState">
+        <div class="bottom-skeleton skeleton-block"></div>
+      </ng-container>
+      <ng-template #statusState>
+        <ng-container *ngIf="errorMessage || !analyticsData.matchedExpenses.length; else statusContent">
+          <div class="empty-state compact-empty" [class.error-state]="!!errorMessage">
+            {{ errorMessage || 'No data for this period' }}
+          </div>
+        </ng-container>
+      </ng-template>
+      <ng-template #statusContent>
+        <div class="status-summary">
+          <div><span class="legend-dot paid-dot"></span><span>Paid {{ analyticsData.paidPercentage | number:'1.0-0' }}%</span><strong>{{ formatCurrency(analyticsData.paidTotal) }}</strong></div>
+          <div><span class="legend-dot pending-dot"></span><span>Pending {{ analyticsData.pendingPercentage | number:'1.0-0' }}%</span><strong>{{ formatCurrency(analyticsData.pendingTotal) }}</strong></div>
+        </div>
+        <div class="stacked-bar">
+          <span class="stacked-paid" [style.width.%]="analyticsData.paidPercentage"></span>
+          <span class="stacked-pending" [style.width.%]="analyticsData.pendingPercentage"></span>
+        </div>
+        <div class="column-chart">
+          <div class="column-item" *ngFor="let bar of statusBars">
+            <div class="column-stage">
+              <div class="column-value" [style.bottom.%]="bar.height + 5">
+                <strong>{{ formatCurrency(bar.amount) }}</strong><small>{{ formatNumber(bar.count) }}</small>
+              </div>
+              <div class="column-bar" [class.paid-column]="bar.tone === 'paid'"
+                [class.pending-column]="bar.tone === 'pending'" [class.total-column]="bar.tone === 'total'"
+                [style.height.%]="bar.height"></div>
+            </div>
+            <span class="column-label">{{ bar.label }}</span>
+          </div>
+        </div>
+      </ng-template>
+    </section>
+
+    <section class="panel breakdown-card modes-card">
+      <div class="card-heading">
+        <div><h2>Payment Modes</h2><p>Spend distribution by mode</p></div>
+      </div>
+      <ng-container *ngIf="isLoading; else modesState">
+        <div class="bottom-skeleton skeleton-block"></div>
+      </ng-container>
+      <ng-template #modesState>
+        <ng-container *ngIf="errorMessage || !analyticsData.matchedExpenses.length; else modesContent">
+          <div class="empty-state compact-empty" [class.error-state]="!!errorMessage">
+            {{ errorMessage || 'No data for this period' }}
+          </div>
+        </ng-container>
+      </ng-template>
+      <ng-template #modesContent>
+        <div class="mode-list">
+          <div class="mode-entry" *ngFor="let mode of paymentModeBars; let i = index">
+            <div class="mode-entry-heading">
+              <span class="mode-name"><i class="mode-dot" [class]="'mode-dot mode-' + i"></i>{{ mode.mode }}</span>
+              <span class="mode-share">{{ mode.percentage | number:'1.0-0' }}%</span>
+            </div>
+            <div class="mode-progress"><span [class]="'mode-fill mode-fill-' + i" [style.width.%]="mode.barPercentage"></span></div>
+            <div class="mode-entry-meta">
+              <strong>{{ formatCurrency(mode.amount) }}</strong>
+              <span>{{ formatNumber(mode.transactions) }} transactions</span>
             </div>
           </div>
         </div>
+      </ng-template>
+    </section>
+
+    <section class="panel breakdown-card category-card">
+      <div class="card-heading">
+        <div><h2>Expenses by Category</h2><p>Share of filtered expense total</p></div>
       </div>
-
-      <div class="chart-panel-body">
-        <ng-container *ngIf="chartRecords.length; else chartEmpty">
-          <div class="chart-canvas" #trendChart>
-            <svg class="line-chart" viewBox="0 0 720 320" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="backgroundGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#eef2ff" stop-opacity="0.65" />
-                <stop offset="100%" stop-color="#ffffff" stop-opacity="0.05" />
-              </linearGradient>
-            </defs>
-
-            <rect x="0" y="0" width="720" height="320" fill="url(#backgroundGradient)" />
-
-            <g *ngFor="let tick of [0, 1, 2, 3, 4]">
-              <line
-                x1="56"
-                [attr.x2]="664"
-                [attr.y1]="(40 + tick * 56)"
-                [attr.y2]="(40 + tick * 56)"
-                stroke="#e5e7eb"
-                stroke-width="1"
-              />
-            </g>
-
-            <g *ngFor="let series of chartSeries">
-              <path
-                class="chart-line"
-                [attr.d]="series.path"
-                [attr.stroke]="series.color"
-                fill="none"
-                stroke-width="3"
-                stroke-linecap="round"
-              />
-              <g *ngFor="let point of series.points">
-                <circle
-                  class="chart-point"
-                  [attr.cx]="point.x"
-                  [attr.cy]="point.y"
-                  r="6"
-                  [attr.fill]="series.color"
-                  stroke="#fff"
-                  stroke-width="2"
-                  (mouseenter)="showTooltip(point, $event)"
-                  (mouseleave)="hideTooltip()"
-                />
-              </g>
-            </g>
-
-            <g *ngFor="let record of chartRecords">
-              <text
-                class="axis-label day-label"
-                [attr.x]="record.x"
-                y="296"
-                text-anchor="middle"
-              >
-                {{ record.dayLabel }}
-              </text>
-            </g>
-
-            <g *ngFor="let group of chartMonthGroups">
-              <text
-                class="axis-label month-label"
-                [attr.x]="group.centerX"
-                y="318"
-                text-anchor="middle"
-              >
-                {{ group.monthLabel }}
-              </text>
-              <line
-                *ngIf="group.dividerX !== undefined"
-                [attr.x1]="group.dividerX"
-                [attr.x2]="group.dividerX"
-                y1="278"
-                y2="302"
-                stroke="#cbd5e1"
-                stroke-width="1"
-                stroke-dasharray="2 2"
-              />
-            </g>
-          </svg>
-
-          <div class="chart-actions">
-            <button class="pdf-button" (click)="downloadReport()" [disabled]="isGeneratingPdf">
-              {{ isGeneratingPdf ? 'Generating PDF…' : 'Download Report (PDF)' }}
-            </button>
+      <ng-container *ngIf="isLoading; else categoriesState">
+        <div class="bottom-skeleton skeleton-block"></div>
+      </ng-container>
+      <ng-template #categoriesState>
+        <ng-container *ngIf="errorMessage || !analyticsData.matchedExpenses.length; else categoriesContent">
+          <div class="empty-state compact-empty" [class.error-state]="!!errorMessage">
+            {{ errorMessage || 'No data for this period' }}
           </div>
-
-          <div class="chart-tooltip" *ngIf="tooltip.visible" [style.left.px]="tooltip.x" [style.top.px]="tooltip.y">
-            <div class="tooltip-series">{{ tooltip.series }}</div>
-            <div class="tooltip-date">{{ tooltip.date }}</div>
-            <div class="tooltip-value">{{ tooltip.value }}</div>
+        </ng-container>
+      </ng-template>
+      <ng-template #categoriesContent>
+        <svg class="category-donut" viewBox="0 0 320 280" role="img" aria-label="Expenses by category">
+          <circle class="donut-track" cx="160" cy="140" r="70"></circle>
+          <path *ngFor="let segment of donutSegments; let i = index" class="donut-segment"
+            [attr.d]="segment.path" [attr.stroke]="segment.color" [attr.pathLength]="100"
+            [style.animation-delay.ms]="i * 45"></path>
+          <path *ngFor="let segment of donutSegments" class="donut-leader"
+            [attr.d]="segment.leaderPath" [attr.stroke]="segment.color"></path>
+          <text *ngFor="let segment of donutSegments" class="donut-label"
+            [attr.x]="segment.labelX" [attr.y]="segment.labelY + 3" [attr.text-anchor]="segment.textAnchor">
+            {{ segment.label }}
+          </text>
+          <text class="donut-center-title" x="160" y="134" text-anchor="middle">TOTAL</text>
+          <text class="donut-center-value" x="160" y="153" text-anchor="middle">{{ formatCurrency(analyticsData.totalExpense) }}</text>
+        </svg>
+        <div class="category-legend">
+          <div class="category-legend-row" *ngFor="let item of analyticsData.categorySummary">
+            <span class="category-name"><i class="category-swatch" [style.background]="item.color"></i>{{ item.category }}</span>
+            <span>{{ formatNumber(item.transactions) }} txns</span>
+            <strong>{{ formatCurrency(item.amount) }}</strong>
+            <small>{{ item.percentage | number:'1.0-0' }}%</small>
           </div>
         </div>
-        </ng-container>
+      </ng-template>
+    </section>
+  </div>
 
-        <ng-template #chartEmpty>
-          <div class="empty-state">No data available for this date range.</div>
-        </ng-template>
-      </div>
+  <div class="details-grid">
+    <section class="panel details-card">
+      <div class="card-heading"><div><h2>Period Details</h2><p>Range totals and daily averages</p></div></div>
+      <ng-container *ngIf="isLoading; else detailSummaryState"><div class="bottom-skeleton skeleton-block"></div></ng-container>
+      <ng-template #detailSummaryState>
+        <div *ngIf="errorMessage || !analyticsData.matchedExpenses.length; else detailSummaryContent" class="empty-state compact-empty" [class.error-state]="!!errorMessage">
+          {{ errorMessage || 'No data for this period' }}
+        </div>
+      </ng-template>
+      <ng-template #detailSummaryContent>
+        <div class="detail-stat-grid">
+          <div><span>Transactions</span><strong>{{ formatNumber(analyticsData.matchedExpenses.length) }}</strong></div>
+          <div><span>Categories used</span><strong>{{ formatNumber(analyticsData.categoryCount) }}</strong></div>
+          <div><span>Average daily expense</span><strong>{{ formatCurrency(analyticsData.averageDailyExpense) }}</strong></div>
+          <div><span>Largest expense</span><strong>{{ analyticsData.largestExpense ? formatCurrency(analyticsData.largestExpense.amount) : formatCurrency(0) }}</strong><small>{{ analyticsData.largestExpense?.title || 'No expense' }}</small></div>
+        </div>
+      </ng-template>
+    </section>
+
+    <section class="panel details-card category-status-card">
+      <div class="card-heading"><div><h2>Category x Status</h2><p>Paid and pending totals by category</p></div></div>
+      <ng-container *ngIf="isLoading; else categoryStatusState"><div class="bottom-skeleton skeleton-block"></div></ng-container>
+      <ng-template #categoryStatusState>
+        <ng-container *ngIf="errorMessage || !analyticsData.matchedExpenses.length; else categoryStatusContent">
+          <div class="empty-state compact-empty" [class.error-state]="!!errorMessage">
+            {{ errorMessage || 'No data for this period' }}
+          </div>
+        </ng-container>
+      </ng-template>
+      <ng-template #categoryStatusContent>
+        <div class="table-wrap">
+          <table class="analytics-table">
+            <thead><tr><th>Category</th><th>Paid</th><th>Pending</th><th>Total</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let row of analyticsData.categoryStatusSummary">
+                <td>{{ row.category }}</td><td>{{ formatCurrency(row.paidAmount) }}</td>
+                <td>{{ formatCurrency(row.pendingAmount) }}</td><td>{{ formatCurrency(row.total) }}</td>
+              </tr>
+              <tr class="totals-row">
+                <th>Total</th><th>{{ formatCurrency(analyticsData.categoryStatusTotals.paidAmount) }}</th>
+                <th>{{ formatCurrency(analyticsData.categoryStatusTotals.pendingAmount) }}</th>
+                <th>{{ formatCurrency(analyticsData.categoryStatusTotals.total) }}</th>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </ng-template>
+    </section>
+
+    <section class="panel details-card pending-list-card">
+      <div class="card-heading"><div><h2>Pending Expenses</h2><p>{{ formatNumber(analyticsData.pendingCount) }} items awaiting payment</p></div></div>
+      <ng-container *ngIf="isLoading; else pendingListState"><div class="bottom-skeleton skeleton-block"></div></ng-container>
+      <ng-template #pendingListState>
+        <ng-container *ngIf="errorMessage || !analyticsData.matchedExpenses.length; else pendingListContent">
+          <div class="empty-state compact-empty" [class.error-state]="!!errorMessage">
+            {{ errorMessage || 'No data for this period' }}
+          </div>
+        </ng-container>
+      </ng-template>
+      <ng-template #pendingListContent>
+        <div class="table-wrap">
+          <table class="analytics-table">
+            <thead><tr><th>Date</th><th>Title</th><th>Category</th><th>Amount</th><th>Mode</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let expense of analyticsData.pendingExpenses">
+                <td>{{ expense.date }}</td><td>{{ expense.title }}</td><td>{{ expense.category }}</td>
+                <td>{{ formatCurrency(expense.amount) }}</td><td>{{ expense.mode }}</td>
+              </tr>
+              <tr *ngIf="!analyticsData.pendingExpenses.length"><td colspan="5" class="table-empty">No pending expenses.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </ng-template>
+    </section>
+
+    <section class="panel details-card top-expenses-card">
+      <div class="card-heading"><div><h2>Top Expenses</h2><p>10 largest expenses in the selected range</p></div></div>
+      <ng-container *ngIf="isLoading; else topExpensesState"><div class="bottom-skeleton skeleton-block"></div></ng-container>
+      <ng-template #topExpensesState>
+        <ng-container *ngIf="errorMessage || !analyticsData.matchedExpenses.length; else topExpensesContent">
+          <div class="empty-state compact-empty" [class.error-state]="!!errorMessage">
+            {{ errorMessage || 'No data for this period' }}
+          </div>
+        </ng-container>
+      </ng-template>
+      <ng-template #topExpensesContent>
+        <div class="table-wrap">
+          <table class="analytics-table">
+            <thead><tr><th>Date</th><th>Title</th><th>Category</th><th>Amount</th><th>Status</th><th>Mode</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let expense of analyticsData.topExpenses">
+                <td>{{ expense.date }}</td><td>{{ expense.title }}</td><td>{{ expense.category }}</td>
+                <td>{{ formatCurrency(expense.amount) }}</td>
+                <td><span class="status-pill" [class.paid-pill]="expense.status === 'Paid'"
+                  [class.pending-pill]="expense.status === 'Pending'">{{ expense.status }}</span></td>
+                <td>{{ expense.mode }}</td><td>{{ expense.description || '—' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </ng-template>
     </section>
   </div>
 </div>
