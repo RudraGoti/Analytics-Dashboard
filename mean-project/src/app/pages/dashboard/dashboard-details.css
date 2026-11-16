@@ -26,7 +26,7 @@
 .panel-header h2 {
   margin: 0;
   color: #111827;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
 }
 
@@ -490,6 +490,26 @@
   align-items: flex-end;
 }
 
+.expenses-workspace {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  gap: 16px;
+}
+
+.expenses-panel {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.expenses-panel > .table-wrap {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
 .expense-filters {
   display: flex;
   gap: 9px;
@@ -528,7 +548,7 @@
 
 .expenses-table {
   width: 100%;
-  min-width: 760px;
+  min-width: 900px;
   border-collapse: collapse;
 }
 
@@ -543,6 +563,9 @@
 }
 
 .expenses-table thead th {
+  position: sticky;
+  z-index: 1;
+  top: 0;
   background: #fafbfc;
   color: var(--dashboard-muted);
   font-size: 9px;
@@ -609,9 +632,212 @@
   color: #9a3412;
 }
 
+.mark-paid-button,
+.cancel-payment-button,
+.view-bill-button,
+.close-preview-button {
+  border: 0;
+  cursor: pointer;
+}
+
+.mark-paid-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  background: #ecfdf5;
+  color: #047857;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mark-paid-button:hover:not(:disabled) {
+  background: #d1fae5;
+}
+
+.mark-paid-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.view-bill-button {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.view-bill-button .material-icons {
+  font-size: 18px;
+}
+
+.payment-editor-row td {
+  background: #f8fafc;
+}
+
+.payment-editor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 4px;
+}
+
+.payment-editor label {
+  display: flex;
+  min-width: 160px;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--dashboard-muted);
+  font-size: 9px;
+}
+
+.payment-editor input,
+.payment-editor select {
+  min-height: 34px;
+  padding: 6px 9px;
+  border: 1px solid var(--dashboard-border);
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  font: inherit;
+  font-size: 10px;
+}
+
+.payment-editor .confirm-payment-button {
+  min-height: 34px;
+  margin-left: 0;
+  padding: 0 12px;
+  background: #059669;
+  color: #fff;
+}
+
+.payment-editor .confirm-payment-button:hover:not(:disabled) {
+  background: #047857;
+}
+
+.cancel-payment-button {
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: #e5e7eb;
+  color: #374151;
+  font: inherit;
+  font-size: 10px;
+}
+
+.payment-error {
+  flex-basis: 100%;
+  color: #b91c1c;
+  font-size: 10px;
+}
+
 .description-cell {
   max-width: 240px;
   color: var(--dashboard-muted) !important;
+}
+
+.bill-preview-panel {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 0 0 min(36%, 390px);
+  flex-direction: column;
+  overflow: auto;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.07);
+}
+
+.bill-preview-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  border-bottom: 1px solid var(--dashboard-border);
+}
+
+.bill-preview-header h2 {
+  margin: 0;
+  color: var(--dashboard-ink);
+  font-size: 16px;
+}
+
+.bill-preview-header p {
+  margin: 5px 0 0;
+  color: var(--dashboard-muted);
+  font-size: 11px;
+}
+
+.close-preview-button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 9px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.bill-preview-document {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  place-items: center;
+  padding: 18px;
+  overflow: auto;
+  background: #f8fafc;
+}
+
+.bill-preview-document img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.bill-preview-document iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  border: 0;
+  background: #fff;
+}
+
+.bill-preview-document p {
+  color: #b91c1c;
+  font-size: 12px;
+}
+
+.bill-preview-description {
+  padding: 18px 20px 24px;
+  border-top: 1px solid var(--dashboard-border);
+}
+
+.bill-preview-description h3 {
+  margin: 0;
+  color: var(--dashboard-ink);
+  font-size: 13px;
+}
+
+.bill-preview-description p {
+  margin: 8px 0 0;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
 }
 
 .table-empty {
@@ -626,4 +852,19 @@
   color: #374151;
   font-size: 10px;
   font-weight: 600;
+}
+
+@media (max-width: 800px) {
+  .expenses-workspace {
+    flex-direction: column;
+  }
+
+  .expenses-panel {
+    min-height: min(60vh, 640px);
+  }
+
+  .bill-preview-panel {
+    min-height: 440px;
+    flex: 0 0 auto;
+  }
 }

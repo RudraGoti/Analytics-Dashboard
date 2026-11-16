@@ -3,7 +3,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { DateService } from '../../services/date.service';
+import { DaySummaryService } from '../../services/day-summary.service';
 import { Dashboard } from './dashboard';
+import { vi } from 'vitest';
 
 describe('Dashboard', () => {
   let component: Dashboard;
@@ -29,12 +31,13 @@ describe('Dashboard', () => {
 
   it('should create', () => expect(component).toBeTruthy());
 
-  it('shows a friendly empty day with zero-valued KPIs', () => {
-    expect(component.recordFound).toBe(false);
+  it('shows four zero-valued KPIs and an empty expense table when there is no entry', () => {
     expect(component.summary.counter).toBe(0);
     expect(component.summary.totalExpenses).toBe(0);
-    expect(fixture.nativeElement.textContent).toContain('No entry for 10 March 2025');
-    expect(fixture.nativeElement.textContent).toContain('Add entry for this date');
+    expect(fixture.nativeElement.querySelectorAll('.summary-grid .dash-card')).toHaveLength(4);
+    expect(fixture.nativeElement.textContent).toContain('All expenses of the day');
+    expect(fixture.nativeElement.textContent).toContain('No expenses recorded for this date.');
+    expect(fixture.nativeElement.textContent).not.toContain('Add entry for this date');
   });
 
   it('shows four summary cards without the categories-used card', () => {
@@ -44,6 +47,12 @@ describe('Dashboard', () => {
     expect(fixture.nativeElement.textContent).not.toContain('Categories used');
     expect(fixture.nativeElement.textContent).not.toContain('Daily overview');
     expect(fixture.nativeElement.querySelector('.dashboard-heading')).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('.expenses-panel')).toHaveLength(1);
+    expect(fixture.nativeElement.textContent).not.toContain('Paid vs Pending');
+    expect(fixture.nativeElement.textContent).not.toContain('Expenses by category');
+    expect(fixture.nativeElement.textContent).not.toContain('Payment modes');
+    expect(fixture.nativeElement.textContent).not.toContain('Highlights');
+    expect(fixture.nativeElement.textContent).not.toContain('Month to date');
     expect(component.loadingCards).toHaveLength(4);
   });
 
@@ -76,5 +85,66 @@ describe('Dashboard', () => {
 
     expect(component.selectedDate).toBe('2025-03-12');
     expect(component.summary.counter).toBe(200);
+  });
+
+  it('records a payment mode and an explicitly selected paid date', () => {
+    const expenseId = '65f000000000000000000001';
+    component.summary = TestBed.inject(DaySummaryService).summarize({
+      date: '2025-03-10',
+      expenses: [{ _id: expenseId, title: 'Rent', category: 'Rent', amount: 100, status: 'Pending', mode: 'Cash' }],
+    });
+    component.applyExpenseFilters();
+    const expense = component.summary.expenses[0];
+    component.openPaymentForm(expense);
+    component.paymentDate = '2025-03-12';
+    component.paymentMode = 'UPI';
+    component.confirmPayment(expense);
+
+    const paymentRequest = http.expectOne((request) =>
+      request.method === 'PATCH' && request.url.endsWith(`/2025-03-10/expenses/${expenseId}/payment`));
+    expect(paymentRequest.request.body).toEqual({ paidDate: '2025-03-12', mode: 'UPI' });
+    paymentRequest.flush({ success: true });
+
+    http.match((request) => request.url.endsWith('/expenses'))
+      .forEach((request) => request.flush(request.request.params.get('date') === '2025-03-10'
+        ? { date: '2025-03-10', expenses: [{ _id: expenseId, title: 'Rent', category: 'Rent', amount: 100, status: 'Paid', mode: 'UPI', paidDate: '2025-03-12' }] }
+        : null));
+    fixture.detectChanges();
+
+    expect(component.summary.expenses[0]).toMatchObject({ status: 'Paid', mode: 'UPI', paidDate: '2025-03-12' });
+  });
+
+  it('opens an attached bill in the side preview with its description', () => {
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:bill-preview');
+    component.summary = TestBed.inject(DaySummaryService).summarize({
+      expenses: [{
+        title: 'Supplies',
+        category: 'Other',
+        amount: 50,
+        status: 'Paid',
+        mode: 'Card',
+        billData: 'aGVsbG8=',
+        billContentType: 'image/png',
+        billFileName: 'receipt.png',
+        description: 'Office supplies receipt',
+      }],
+    });
+    component.openBillPreview(component.summary.expenses[0]);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.bill-preview-panel')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.bill-preview-document img').getAttribute('src'))
+      .toBe('blob:bill-preview');
+    expect(fixture.nativeElement.querySelector('.bill-preview-description').textContent)
+      .toContain('Office supplies receipt');
+    expect(fixture.nativeElement.querySelector('.expenses-workspace').classList)
+      .toContain('has-bill-preview');
+
+    fixture.nativeElement.querySelector('.close-preview-button').click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.bill-preview-panel')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.expenses-workspace').classList)
+      .not.toContain('has-bill-preview');
   });
 });

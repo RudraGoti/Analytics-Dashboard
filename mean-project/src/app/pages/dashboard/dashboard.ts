@@ -1,28 +1,24 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { forkJoin, Subscription } from 'rxjs';
 import { DateService } from '../../services/date.service';
-import { DayComparison, DaySummary, DaySummaryService, MonthSummary } from '../../services/day-summary.service';
+import { DayComparison, DaySummary, DaySummaryService } from '../../services/day-summary.service';
 import { ExpenseService } from '../../services/expense.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css', './dashboard-details.css'],
 })
 export class Dashboard implements OnInit, OnDestroy {
   selectedDate = '';
-  selectedDateDisplay = '';
-  selectedMonthDisplay = '';
   summary!: DaySummary;
-  monthSummary: MonthSummary = { counter: 0, totalExpenses: 0, netPosition: 0 };
   comparison: DayComparison | null = null;
-  hasPreviousRecord = false;
-  recordFound = false;
   isLoading = true;
   errorMessage = '';
   statusFilter = '';
@@ -30,6 +26,15 @@ export class Dashboard implements OnInit, OnDestroy {
   amountSort: 'asc' | 'desc' = 'desc';
   filteredExpenses: DaySummary['expenses'] = [];
   filteredExpenseTotal = 0;
+  paymentExpenseId: string | null = null;
+  paymentDate = '';
+  paymentMode = '';
+  paymentError = '';
+  isUpdatingPayment = false;
+  billPreview: DaySummary['expenses'][number] | null = null;
+  billPreviewUrl: string | null = null;
+  billPreviewResourceUrl: SafeResourceUrl | null = null;
+  billPreviewError = '';
 
   readonly statuses = ['Paid', 'Pending'];
   readonly modes = ['Cash', 'UPI', 'Card', 'Bank Transfer'];
@@ -42,6 +47,7 @@ export class Dashboard implements OnInit, OnDestroy {
     private expenseService: ExpenseService,
     private dateService: DateService,
     private daySummaryService: DaySummaryService,
+    private sanitizer: DomSanitizer,
   ) {
     this.summary = this.daySummaryService.summarize(null);
   }
@@ -49,16 +55,15 @@ export class Dashboard implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.dateSubscription = this.dateService.selectedDate$.subscribe((date) => {
       this.selectedDate = date;
-      this.selectedDateDisplay = this.formatDateLabel(date);
-      this.selectedMonthDisplay = date
-        ? new Date(`${date}T00:00:00`).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
-        : '';
+      this.paymentExpenseId = null;
+      this.closeBillPreview();
       this.loadRecord(date);
     });
   }
 
   ngOnDestroy(): void {
     this.dateSubscription.unsubscribe();
+    this.revokeBillPreviewUrl();
   }
 
   loadRecord(date = this.selectedDate): void {
@@ -71,7 +76,6 @@ export class Dashboard implements OnInit, OnDestroy {
 
     const requestVersion = ++this.loadVersion;
     const previousDate = this.shiftDate(date, -1);
-    const firstOfMonth = `${date.slice(0, 7)}-01`;
     this.isLoading = true;
     this.errorMessage = '';
     this.cd.markForCheck();
@@ -79,20 +83,16 @@ export class Dashboard implements OnInit, OnDestroy {
     forkJoin({
       current: this.expenseService.getExpenseByDate(date),
       previous: this.expenseService.getExpenseByDate(previousDate),
-      month: this.expenseService.getExpensesByDateRange(firstOfMonth, date),
     }).subscribe({
-      next: ({ current, previous, month }) => {
+      next: ({ current, previous }) => {
         if (requestVersion !== this.loadVersion || this.selectedDate !== date) {
           return;
         }
 
-        this.recordFound = current !== null && current !== undefined;
         this.summary = this.daySummaryService.summarize(current);
-        this.hasPreviousRecord = previous !== null && previous !== undefined;
-        this.comparison = this.hasPreviousRecord
+        this.comparison = previous !== null && previous !== undefined
           ? this.daySummaryService.compare(this.summary, this.daySummaryService.summarize(previous))
           : null;
-        this.monthSummary = this.daySummaryService.summarizeMonth(month);
         this.applyExpenseFilters();
         this.isLoading = false;
         this.cd.markForCheck();
@@ -137,23 +137,99 @@ export class Dashboard implements OnInit, OnDestroy {
     }).format(amount);
   }
 
-  formatDateLabel(date: string): string {
-    if (!date) {
-      return 'Selected date';
-    }
+  getComparison(key: keyof DayComparison): DayComparison[keyof DayComparison] | null {
+    return this.comparison?.[key] || null;
+  }
+
+  formatPaidDate(date: string): string {
     return new Date(`${date}T00:00:00`).toLocaleDateString('en-IN', {
       day: 'numeric',
-      month: 'long',
+      month: 'short',
       year: 'numeric',
     });
   }
 
-  formatPercentage(value: number): string {
-    return `${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(value)}%`;
+  openPaymentForm(expense: DaySummary['expenses'][number]): void {
+    if (!expense.id) return;
+    this.paymentExpenseId = expense.id;
+    this.paymentDate = this.todayDate();
+    this.paymentMode = '';
+    this.paymentError = '';
   }
 
-  getComparison(key: keyof DayComparison): DayComparison[keyof DayComparison] | null {
-    return this.comparison?.[key] || null;
+  cancelPayment(): void {
+    this.paymentExpenseId = null;
+    this.paymentError = '';
+  }
+
+  confirmPayment(expense: DaySummary['expenses'][number]): void {
+    if (!expense.id || expense.id !== this.paymentExpenseId) return;
+    if (!this.paymentDate || !this.paymentMode) {
+      this.paymentError = 'Choose the paid date and payment mode.';
+      return;
+    }
+
+    this.isUpdatingPayment = true;
+    this.paymentError = '';
+    this.expenseService.markExpensePaid(this.selectedDate, expense.id, {
+      paidDate: this.paymentDate,
+      mode: this.paymentMode,
+    }).subscribe({
+      next: () => {
+        this.isUpdatingPayment = false;
+        this.paymentExpenseId = null;
+        this.loadRecord();
+      },
+      error: (error: HttpErrorResponse) => {
+        console.error('Failed to update expense payment', error);
+        this.isUpdatingPayment = false;
+        this.paymentError = typeof error.error?.error === 'string'
+          ? error.error.error
+          : 'Unable to update this payment. Please try again.';
+        this.cd.markForCheck();
+      },
+    });
+  }
+
+  openBillPreview(expense: DaySummary['expenses'][number]): void {
+    this.closeBillPreview();
+    this.billPreview = expense;
+    try {
+      if (!expense.billData || !expense.billContentType) {
+        throw new Error('This bill attachment is unavailable.');
+      }
+      const binary = atob(expense.billData);
+      const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+      const url = URL.createObjectURL(new Blob([bytes], { type: expense.billContentType }));
+      this.billPreviewUrl = url;
+      if (expense.billContentType === 'application/pdf') {
+        this.billPreviewResourceUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+      }
+    } catch (error) {
+      console.error('Failed to open bill attachment', error);
+      this.billPreviewError = 'Unable to display this bill attachment.';
+    }
+  }
+
+  closeBillPreview(): void {
+    this.revokeBillPreviewUrl();
+    this.billPreview = null;
+    this.billPreviewError = '';
+  }
+
+  private todayDate(): string {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${now.getFullYear()}-${month}-${day}`;
+  }
+
+  private revokeBillPreviewUrl(): void {
+    if (this.billPreviewUrl) {
+      URL.revokeObjectURL(this.billPreviewUrl);
+    }
+    this.billPreviewUrl = null;
+    this.billPreviewResourceUrl = null;
   }
 
   private shiftDate(date: string, days: number): string {

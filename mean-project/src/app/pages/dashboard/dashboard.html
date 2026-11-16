@@ -7,8 +7,18 @@
         <span class="skeleton-line skeleton-meta"></span>
       </div>
     </section>
-    <div class="loading-panels">
-      <div class="panel skeleton-panel" *ngFor="let card of [1, 2, 3, 4]"></div>
+    <div class="expenses-workspace">
+      <section class="panel expenses-panel">
+        <header class="panel-header expenses-header">
+          <div>
+            <h2>All expenses of the day</h2>
+            <p>Loading expenses...</p>
+          </div>
+        </header>
+        <div class="table-wrap">
+          <div class="skeleton-expenses-table" aria-hidden="true"></div>
+        </div>
+      </section>
     </div>
   </ng-container>
 
@@ -26,15 +36,6 @@
   </ng-template>
 
   <ng-template #dashboardContent>
-    <section class="notice empty-day-notice" *ngIf="!recordFound">
-      <span class="material-icons">event_available</span>
-      <div>
-        <strong>No entry for {{ selectedDateDisplay }}</strong>
-        <p>There is no saved counter or expense record for this date yet.</p>
-      </div>
-      <a class="primary-button" routerLink="/AddExpense">Add entry for this date</a>
-    </section>
-
     <section class="summary-grid" aria-label="Selected day summary">
       <article class="dash-card card-counter">
         <div class="card-icon"><span class="material-icons">point_of_sale</span></div>
@@ -83,163 +84,9 @@
           {{ change.isNew ? 'New vs yesterday' : (change.percentage | number:'1.0-0') + '% vs yesterday' }}
         </div>
       </article>
-
     </section>
 
-    <section class="dashboard-panels">
-      <article class="panel">
-        <header class="panel-header">
-          <div>
-            <h2>Paid vs Pending</h2>
-            <p>Expense amounts for {{ selectedDateDisplay }}</p>
-          </div>
-          <span class="material-icons panel-heading-icon">donut_small</span>
-        </header>
-        <div class="panel-content">
-          <div class="status-amounts">
-            <div class="status-amount paid-text">
-              <span class="status-dot"></span>
-              <span>Paid</span>
-              <strong>{{ formatCurrency(summary.paidTotal) }}</strong>
-              <small>{{ formatPercentage(summary.paidPercentage) }}</small>
-            </div>
-            <div class="status-amount pending-text">
-              <span class="status-dot"></span>
-              <span>Pending</span>
-              <strong>{{ formatCurrency(summary.pendingTotal) }}</strong>
-              <small>{{ formatPercentage(summary.pendingPercentage) }}</small>
-            </div>
-          </div>
-          <div class="stacked-track" role="img"
-            [attr.aria-label]="'Paid ' + formatPercentage(summary.paidPercentage) + ', Pending ' + formatPercentage(summary.pendingPercentage)">
-            <span class="stacked-fill paid-fill" [style.width.%]="summary.paidPercentage"></span>
-            <span class="stacked-fill pending-fill" [style.width.%]="summary.pendingPercentage"></span>
-          </div>
-          <p class="chart-footnote">{{ summary.expenseCount }} total transaction(s)</p>
-        </div>
-      </article>
-
-      <article class="panel category-panel">
-        <header class="panel-header">
-          <div>
-            <h2>Expenses by category</h2>
-            <p>Share of total expense by amount</p>
-          </div>
-          <span class="material-icons panel-heading-icon">pie_chart</span>
-        </header>
-        <div class="panel-content category-content">
-          <div class="donut-chart" [style.background]="summary.pieGradient">
-            <div class="donut-center">
-              <small>Total expense</small>
-              <strong>{{ formatCurrency(summary.totalExpenses) }}</strong>
-            </div>
-          </div>
-          <div class="category-legend" *ngIf="summary.categories.length; else noCategoryData">
-            <div class="category-legend-row" *ngFor="let category of summary.categories">
-              <span class="legend-color" [style.background]="category.color"></span>
-              <span class="legend-name"><span>{{ category.icon }}</span>{{ category.name }}</span>
-              <strong>{{ formatCurrency(category.amount) }}</strong>
-              <small>{{ formatPercentage(category.percentage) }} · {{ category.count }}</small>
-            </div>
-          </div>
-          <ng-template #noCategoryData>
-            <p class="panel-empty">No category expenses for this date.</p>
-          </ng-template>
-        </div>
-      </article>
-
-      <article class="panel">
-        <header class="panel-header">
-          <div>
-            <h2>Payment modes</h2>
-            <p>Amount and share by payment method</p>
-          </div>
-          <span class="material-icons panel-heading-icon">payments</span>
-        </header>
-        <div class="panel-content mode-list">
-          <div class="mode-row" *ngFor="let mode of summary.modes; let i = index">
-            <div class="mode-heading">
-              <span><i class="mode-dot" [ngClass]="'mode-' + i"></i>{{ mode.name }}</span>
-              <strong>{{ formatCurrency(mode.amount) }}</strong>
-            </div>
-            <div class="mode-track">
-              <span [ngClass]="'mode-fill mode-fill-' + i" [style.width.%]="mode.percentage"></span>
-            </div>
-            <div class="mode-meta">
-              <span>{{ formatPercentage(mode.percentage) }} share</span>
-              <span>{{ mode.count }} transaction(s)</span>
-            </div>
-          </div>
-        </div>
-      </article>
-
-      <article class="panel highlights-panel">
-        <header class="panel-header">
-          <div>
-            <h2>Highlights</h2>
-            <p>Key details from the selected day</p>
-          </div>
-          <span class="material-icons panel-heading-icon">insights</span>
-        </header>
-        <div class="panel-content highlight-list">
-          <div class="largest-expense">
-            <span class="highlight-label">Largest expense</span>
-            <ng-container *ngIf="summary.largestExpense; else noLargestExpense">
-              <div class="largest-title">
-                <span>{{ summary.largestExpense.categoryIcon }}</span>
-                <strong>{{ summary.largestExpense.title || summary.largestExpense.category }}</strong>
-              </div>
-              <div class="largest-meta">
-                <span>{{ summary.largestExpense.category }}</span>
-                <strong>{{ formatCurrency(summary.largestExpense.amount) }}</strong>
-              </div>
-            </ng-container>
-            <ng-template #noLargestExpense><span class="muted-value">No expenses recorded</span></ng-template>
-          </div>
-
-          <div class="cash-digital">
-            <div>
-              <span class="highlight-label">Cash</span>
-              <strong>{{ formatCurrency(summary.cashAmount) }}</strong>
-              <small>{{ formatPercentage(summary.cashPercentage) }} of expenses</small>
-            </div>
-            <div>
-              <span class="highlight-label">Digital</span>
-              <strong>{{ formatCurrency(summary.digitalAmount) }}</strong>
-              <small>UPI + Card + Bank Transfer · {{ formatPercentage(summary.digitalPercentage) }}</small>
-            </div>
-          </div>
-
-          <div class="ratio-summary">
-            <div class="ratio-heading">
-              <span class="highlight-label">Expense-to-counter ratio</span>
-              <strong [ngClass]="summary.expenseCounterTone">{{ formatPercentage(summary.expenseCounterRatio) }}</strong>
-            </div>
-            <div class="ratio-track">
-              <span [ngClass]="summary.expenseCounterTone" [style.width.%]="summary.expenseCounterProgress"></span>
-            </div>
-            <small>Expenses as a share of counter sales</small>
-          </div>
-        </div>
-      </article>
-    </section>
-
-    <section class="panel month-panel">
-      <header class="panel-header">
-        <div>
-          <h2>Month to date</h2>
-          <p>{{ selectedMonthDisplay }} · through {{ selectedDateDisplay }}</p>
-        </div>
-        <span class="material-icons panel-heading-icon">calendar_month</span>
-      </header>
-      <div class="month-strip">
-        <div><span>Counter</span><strong>{{ formatCurrency(monthSummary.counter) }}</strong></div>
-        <div><span>Total expenses</span><strong>{{ formatCurrency(monthSummary.totalExpenses) }}</strong></div>
-        <div><span>Net so far</span><strong [class.negative-text]="monthSummary.netPosition < 0">
-          {{ formatCurrency(monthSummary.netPosition) }}</strong></div>
-      </div>
-    </section>
-
+    <div class="expenses-workspace" [class.has-bill-preview]="!!billPreview">
     <section class="panel expenses-panel">
       <header class="panel-header expenses-header">
         <div>
@@ -277,11 +124,14 @@
               </th>
               <th>Status</th>
               <th>Mode</th>
+              <th>Paid date</th>
+              <th>Bill</th>
               <th>Description</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let expense of filteredExpenses">
+            <ng-container *ngFor="let expense of filteredExpenses">
+            <tr>
               <td class="expense-title-cell">{{ expense.title || 'Untitled expense' }}</td>
               <td><span class="table-category-icon">{{ expense.categoryIcon }}</span>{{ expense.category }}</td>
               <td class="amount-cell">{{ formatCurrency(expense.amount) }}</td>
@@ -289,13 +139,59 @@
                 <span class="status-badge" [ngClass]="expense.status === 'Paid' ? 'paid' : 'pending'">
                   {{ expense.status }}
                 </span>
-                <span class="attention-badge" *ngIf="expense.status === 'Pending'">Needs attention</span>
+                <button
+                  *ngIf="expense.status === 'Pending'"
+                  class="mark-paid-button"
+                  type="button"
+                  [disabled]="!expense.id || isUpdatingPayment"
+                  (click)="openPaymentForm(expense)"
+                >
+                  Mark paid
+                </button>
               </td>
-              <td>{{ expense.mode }}</td>
+              <td>{{ expense.status === 'Paid' ? (expense.mode || 'Not specified') : '—' }}</td>
+              <td>{{ expense.paidDate ? formatPaidDate(expense.paidDate) : '—' }}</td>
+              <td>
+                <button
+                  *ngIf="expense.billData"
+                  class="view-bill-button"
+                  type="button"
+                  (click)="openBillPreview(expense)"
+                  [attr.aria-label]="'View bill for ' + expense.title"
+                  title="View bill"
+                >
+                  <span class="material-icons">visibility</span>
+                </button>
+                <span *ngIf="!expense.billData">—</span>
+              </td>
               <td class="description-cell">{{ expense.description || '—' }}</td>
             </tr>
+            <tr class="payment-editor-row" *ngIf="paymentExpenseId === expense.id">
+              <td colspan="8">
+                <div class="payment-editor">
+                  <label>
+                    <span>Paid date</span>
+                    <input type="date" [(ngModel)]="paymentDate" />
+                  </label>
+                  <label>
+                    <span>Payment mode</span>
+                    <select [(ngModel)]="paymentMode">
+                      <option value="">Select mode</option>
+                      <option *ngFor="let mode of modes" [value]="mode">{{ mode }}</option>
+                    </select>
+                  </label>
+                  <button type="button" class="mark-paid-button confirm-payment-button"
+                    [disabled]="isUpdatingPayment" (click)="confirmPayment(expense)">
+                    {{ isUpdatingPayment ? 'Saving...' : 'Confirm payment' }}
+                  </button>
+                  <button type="button" class="cancel-payment-button" (click)="cancelPayment()">Cancel</button>
+                  <span class="payment-error" *ngIf="paymentError" role="alert">{{ paymentError }}</span>
+                </div>
+              </td>
+            </tr>
+            </ng-container>
             <tr *ngIf="filteredExpenses.length === 0">
-              <td colspan="6" class="table-empty">
+              <td colspan="8" class="table-empty">
                 {{ summary.expenseCount ? 'No expenses match these filters.' : 'No expenses recorded for this date.' }}
               </td>
             </tr>
@@ -304,11 +200,34 @@
             <tr>
               <th colspan="2">Total shown</th>
               <th>{{ formatCurrency(filteredExpenseTotal) }}</th>
-              <th colspan="3">{{ filteredExpenses.length }} transaction(s)</th>
+              <th colspan="5">{{ filteredExpenses.length }} transaction(s)</th>
             </tr>
           </tfoot>
         </table>
       </div>
     </section>
+    <aside class="bill-preview-panel" *ngIf="billPreview as selectedBill"
+      role="dialog" aria-modal="false" aria-labelledby="bill-preview-title">
+      <header class="bill-preview-header">
+        <div>
+          <h2 id="bill-preview-title">{{ selectedBill.billFileName || selectedBill.title }}</h2>
+          <p>{{ selectedBill.title }} · {{ formatCurrency(selectedBill.amount) }}</p>
+        </div>
+        <button type="button" class="close-preview-button" aria-label="Close bill preview"
+          (click)="closeBillPreview()">×</button>
+      </header>
+      <div class="bill-preview-document">
+        <img *ngIf="selectedBill.billContentType?.startsWith('image/')" [src]="billPreviewUrl"
+          [alt]="selectedBill.billFileName || 'Expense bill'">
+        <iframe *ngIf="selectedBill.billContentType === 'application/pdf'" [src]="billPreviewResourceUrl"
+          [title]="selectedBill.billFileName || 'Expense bill'"></iframe>
+        <p *ngIf="billPreviewError" role="alert">{{ billPreviewError }}</p>
+      </div>
+      <section class="bill-preview-description">
+        <h3>Description</h3>
+        <p>{{ selectedBill.description || 'No description provided.' }}</p>
+      </section>
+    </aside>
+    </div>
   </ng-template>
 </div>
