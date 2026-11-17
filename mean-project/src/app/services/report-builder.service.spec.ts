@@ -22,7 +22,9 @@ describe('ReportBuilderService', () => {
     ], '2024-01-01', '2024-01-01');
 
     expect(service.totals(days, 300).closingInHand).toBe(375);
-    expect(service.buildPayload(days, { from: '2024-01-01', to: '2024-01-01' }, 300, 'Shop').dateWiseSummary[0].runningInHand).toBe(375);
-    expect(service.buildPayload(days, { from: '2024-01-01', to: '2024-01-01' }, 300, 'Shop').detailedRecords[0].previousInHand).toBe(300);
+    const payload = service.buildPayload(days, { from: '2024-01-01', to: '2024-01-01' }, 300, 'Shop');
+    expect(payload.dateWiseSummary[0].runningInHand).toBe(375);
+    expect(payload.detailedRecords[0].previousInHand).toBe(300);
+    expect(payload.businessName).toBe('Shop');
   });
 });

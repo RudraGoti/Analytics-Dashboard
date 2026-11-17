@@ -158,6 +158,7 @@ export class ReportBuilderService {
     return {
       fileName: `Expense_Report_${selectedRange.from}_to_${selectedRange.to}.pdf`,
       reportTitle: `${businessName || 'Business'} Expense Report`,
+      businessName: businessName || 'Business',
       selectedRange,
       generationDate: this.formatLongDate(this.formatDate(new Date())),
       openingInHand,

@@ -388,6 +388,10 @@
   vertical-align: top;
 }
 
+.analytics-table td {
+  font-size: 16px;
+}
+
 .analytics-table th {
   color: var(--analytics-muted);
   font-size: 9px;

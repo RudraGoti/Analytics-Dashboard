@@ -5,6 +5,7 @@ import autoTable from 'jspdf-autotable';
 export interface PdfReportPayload {
   fileName: string;
   reportTitle: string;
+  businessName?: string;
   selectedRange: { from: string; to: string };
   generationDate: string;
   openingInHand: number;
@@ -12,13 +13,34 @@ export interface PdfReportPayload {
   totalExpense: number;
   closingInHand: number;
   categorySummary: Array<{ category: string; amount: number; percentage: number; color: string }>;
-  topTransactions: Array<{ date: string; title: string; category: string; amount: number; description: string; time: string; notes: string }>;
-  dateWiseSummary: Array<{ date: string; counter: number; expense: number; runningInHand: number; notes: string }>;
+  topTransactions: Array<{
+    date: string;
+    title: string;
+    category: string;
+    amount: number;
+    description: string;
+    time: string;
+    notes: string;
+  }>;
+  dateWiseSummary: Array<{
+    date: string;
+    counter: number;
+    expense: number;
+    runningInHand: number;
+    notes: string;
+  }>;
   detailedRecords: Array<{
     date: string;
     previousInHand: number;
     counter: number;
-    expenses: Array<{ title: string; category: string; amount: number; description: string; time: string; notes: string }>;
+    expenses: Array<{
+      title: string;
+      category: string;
+      amount: number;
+      description: string;
+      time: string;
+      notes: string;
+    }>;
     totalExpense: number;
     closingInHand: number;
   }>;
@@ -30,8 +52,18 @@ export interface PdfReportPayload {
     pendingPercentage: number;
     pendingCount: number;
   };
-  paymentModeSummary: Array<{ mode: string; transactions: number; amount: number; percentage: number }>;
-  categoryStatusSummary: Array<{ category: string; paidAmount: number; pendingAmount: number; total: number }>;
+  paymentModeSummary: Array<{
+    mode: string;
+    transactions: number;
+    amount: number;
+    percentage: number;
+  }>;
+  categoryStatusSummary: Array<{
+    category: string;
+    paidAmount: number;
+    pendingAmount: number;
+    total: number;
+  }>;
   trendChartImage?: string;
 }
 
@@ -41,388 +73,215 @@ export interface PdfReportPayload {
 export class PdfReportService {
   private readonly pageWidth = 210;
   private readonly pageHeight = 297;
-  private readonly margin = 14;
+  private readonly margin = 18;
+  private readonly borderColor = '#cbd5e1';
+  private readonly textColor = '#334155';
+  private readonly headingColor = '#1e293b';
 
   async generateReport(rawPayload: PdfReportPayload): Promise<void> {
     const payload = this.sanitizePayload(rawPayload);
-    const doc = new jsPDF({ format: 'a4', unit: 'mm', orientation: 'portrait' });
-    const titleColor = '#0f172a';
-    const textColor = '#475569';
-    const headerText = '#111827';
-    const cardBackground = '#ffffff';
-    const pageBackground = '#f3f4f6';
-    const kpiBackgrounds = ['#eff6ff', '#ecfdf5', '#fff7ed', '#f5f3ff'];
-    const kpiBorders = ['#2563eb', '#16a34a', '#ea580c', '#7c3aed'];
-    const kpiText = ['#2563eb', '#16a34a', '#ea580c', '#7c3aed'];
+    const doc = this.createDocument();
+    const businessName = payload.businessName || payload.reportTitle;
+    const period = `${this.formatShortDate(payload.selectedRange.from)} - ${this.formatShortDate(payload.selectedRange.to)}`;
+    const innerWidth = this.pageWidth - this.margin * 2;
 
-    const reportHeader = () => {
-      doc.setFillColor(pageBackground);
-      doc.rect(0, 0, this.pageWidth, this.pageHeight, 'F');
+    this.drawPageFrame(doc);
+    this.drawHeader(doc, businessName, 'EXPENSE REPORT', period, payload.generationDate);
+    doc.setDrawColor(this.borderColor);
+    doc.setLineWidth(0.4);
+    doc.line(this.margin + 8, this.margin + 37, this.pageWidth - this.margin - 8, this.margin + 37);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(this.headingColor);
+    doc.text('BALANCE SUMMARY', this.margin + 8, this.margin + 48);
 
-      const headerX = this.margin;
-      const headerY = 18;
-      const headerW = this.pageWidth - this.margin * 2;
-      const headerH = 28;
+    const metrics = [
+      { label: 'Opening balance', value: this.formatCurrency(payload.openingInHand) },
+      { label: 'Counter total', value: this.formatCurrency(payload.totalCounter) },
+      { label: 'Expense total', value: this.formatCurrency(payload.totalExpense) },
+      { label: 'Closing balance', value: this.formatCurrency(payload.closingInHand) },
+    ];
+    const gridY = this.margin + 55;
+    const gap = 5;
+    const cardWidth = (innerWidth - gap * 3) / 4;
+    const cardHeight = 34;
 
-      doc.setFillColor(cardBackground);
-      doc.roundedRect(headerX, headerY, headerW, headerH, 4, 4, 'F');
-      doc.setDrawColor('#d1d5db');
-      doc.setLineWidth(0.3);
-      doc.roundedRect(headerX, headerY, headerW, headerH, 4, 4, 'S');
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(18);
-      doc.setTextColor(titleColor);
-      doc.text(payload.reportTitle, headerX + 6, headerY + 9);
-
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.setTextColor(textColor);
-      doc.text('Financial overview and analytics summary report', headerX + 6, headerY + 15);
-
-      doc.setFontSize(9);
-      doc.setTextColor('#64748b');
-      doc.text(`Period: ${payload.selectedRange.from} to ${payload.selectedRange.to}`, headerX + headerW - 6, headerY + 9, { align: 'right' });
-      doc.text(`Generated: ${payload.generationDate}`, headerX + headerW - 6, headerY + 15, { align: 'right' });
-    };
-
-    const addFooter = (pageNumber: number, totalPages: number) => {
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
-      doc.setTextColor('#6b7280');
-      doc.text('Analytics Dashboard • Professional report generated automatically', this.margin, this.pageHeight - 12);
-      doc.text(`Page ${pageNumber} of ${totalPages}`, this.pageWidth - this.margin, this.pageHeight - 12, { align: 'right' });
-    };
-
-    const drawKpiCard = (x: number, y: number, title: string, value: string, subtitle: string, bgIndex: number) => {
-      const cardW = (this.pageWidth - this.margin * 2 - 12) / 4;
-      const cardH = 30;
-      doc.setFillColor(kpiBackgrounds[bgIndex]);
-      doc.roundedRect(x, y, cardW, cardH, 4, 4, 'F');
-      doc.setDrawColor(kpiBorders[bgIndex]);
-      doc.setLineWidth(0.5);
-      doc.roundedRect(x, y, cardW, cardH, 4, 4, 'S');
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
-      doc.setTextColor(kpiText[bgIndex]);
-      doc.text(title, x + 5, y + 8);
-
-      doc.setFontSize(16);
-      doc.setTextColor(headerText);
-      doc.text(value, x + 5, y + 18);
-
+    metrics.forEach((metric, index) => {
+      const x = this.margin + index * (cardWidth + gap);
+      doc.setDrawColor(this.borderColor);
+      doc.setLineWidth(0.35);
+      doc.roundedRect(x, gridY, cardWidth, cardHeight, 2, 2, 'S');
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
-      doc.setTextColor(textColor);
-      doc.text(subtitle, x + 5, y + 25);
+      doc.setTextColor(this.textColor);
+      doc.text(metric.label, x + 3, gridY + 10);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(this.headingColor);
+      doc.text(metric.value, x + 3, gridY + 23);
+    });
+
+    this.drawPageNumber(doc, 1);
+    doc.addPage();
+    const drawLedgerPageHeader = () => {
+      this.drawPageFrame(doc);
+      this.drawHeader(doc, businessName, 'DATE-WISE LEDGER', period, payload.generationDate, true);
     };
 
-    const drawSectionCard = (x: number, y: number, width: number, height: number, title: string) => {
-      doc.setFillColor(cardBackground);
-      doc.roundedRect(x, y, width, height, 4, 4, 'F');
-      doc.setDrawColor('#e5e7eb');
-      doc.setLineWidth(0.25);
-      doc.roundedRect(x, y, width, height, 4, 4, 'S');
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
-      doc.setTextColor(titleColor);
-      doc.text(title, x + 6, y + 9);
-    };
-
-    const chartWidth = this.pageWidth - this.margin * 2;
-    const chartHeight = 68;
-    const chartX = this.margin;
-    let y = 18;
-
-    reportHeader();
-    y += 28 + 8;
-
-    const kpiX = this.margin;
-    const kpiW = (this.pageWidth - this.margin * 2 - 12) / 4;
-    const kpiY = y;
-    drawKpiCard(kpiX, kpiY, 'Counter', this.formatNumber(payload.totalCounter), 'Total counter', 0);
-    drawKpiCard(kpiX + kpiW + 4, kpiY, 'Total Expense', this.formatCurrency(payload.totalExpense), 'Total expense', 1);
-    drawKpiCard(kpiX + (kpiW + 4) * 2, kpiY, 'Transactions', this.formatNumber(payload.topTransactions.length), 'Total transactions', 2);
-    drawKpiCard(kpiX + (kpiW + 4) * 3, kpiY, 'Categories Used', this.formatNumber(payload.categorySummary.length), 'Active categories', 3);
-    y += 30 + 10;
-
-    drawSectionCard(chartX, y, chartWidth, chartHeight + 10, 'Trend Overview');
-    if (payload.trendChartImage) {
-      doc.addImage(payload.trendChartImage, 'JPEG', chartX + 4, y + 11, chartWidth - 8, chartHeight);
-    }
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(textColor);
-    doc.text('Counter', chartX + chartWidth - 40, y + 10, { align: 'left' });
-    doc.setTextColor('#2563eb');
-    doc.circle(chartX + chartWidth - 47, y + 7, 1.5, 'F');
-    doc.setTextColor(textColor);
-    doc.text('Expense', chartX + chartWidth - 22, y + 10, { align: 'left' });
-    doc.setTextColor('#ea580c');
-    doc.circle(chartX + chartWidth - 29, y + 7, 1.5, 'F');
-    doc.setTextColor(textColor);
-    doc.text('In Hand', chartX + chartWidth - 9, y + 10, { align: 'left' });
-    doc.setTextColor('#16a34a');
-    doc.circle(chartX + chartWidth - 16, y + 7, 1.5, 'F');
-
-    y += chartHeight + 10 + 12;
-
-    const cardW = (chartWidth - 8) / 3;
-    const summaryY = y;
-    drawSectionCard(chartX, summaryY, cardW, 55, 'Summary');
-    drawSectionCard(chartX + cardW + 4, summaryY, cardW, 55, 'Category Breakdown');
-    drawSectionCard(chartX + (cardW + 4) * 2, summaryY, cardW, 55, 'Top Transactions');
-
-    const innerY = summaryY + 12;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(textColor);
-
-    const summaryX = chartX + 6;
-    doc.text('Opening In Hand', summaryX, innerY);
-    doc.setFont('helvetica', 'bold');
-    doc.text(this.formatCurrency(payload.openingInHand), summaryX, innerY + 5);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Total Counter', summaryX, innerY + 13);
-    doc.setFont('helvetica', 'bold');
-    doc.text(this.formatNumber(payload.totalCounter), summaryX, innerY + 18);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Total Expense', summaryX, innerY + 26);
-    doc.setFont('helvetica', 'bold');
-    doc.text(this.formatCurrency(payload.totalExpense), summaryX, innerY + 31);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Closing In Hand', summaryX, innerY + 39);
-    doc.setFont('helvetica', 'bold');
-    doc.text(this.formatCurrency(payload.closingInHand), summaryX, innerY + 44);
-
-    const categoryX = chartX + cardW + 10;
-    let categoryRow = innerY;
-    payload.categorySummary.slice(0, 4).forEach((item) => {
-      doc.setFillColor(item.color);
-      doc.circle(categoryX + 3.5, categoryRow - 2, 2.5, 'F');
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(titleColor);
-      doc.setFontSize(9);
-      doc.text(item.category, categoryX + 8, categoryRow);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(textColor);
-      doc.text(`${this.formatCurrency(item.amount)} • ${item.percentage}%`, categoryX + 8, categoryRow + 5);
-      categoryRow += 12;
+    drawLedgerPageHeader();
+    const detailedRows = payload.detailedRecords.map((record) => {
+      const expenseEntries = record.expenses.length
+        ? record.expenses
+            .map(
+              (expense) =>
+                `${expense.title} (${expense.category}): ${this.formatCurrency(expense.amount)}`,
+            )
+            .join('\n')
+        : 'No expenses';
+      return [
+        this.formatShortDate(record.date),
+        this.formatCurrency(record.previousInHand),
+        this.formatCurrency(record.counter),
+        expenseEntries,
+        this.formatCurrency(record.totalExpense),
+        this.formatCurrency(record.closingInHand),
+      ];
     });
-
-    const transactionsX = chartX + (cardW + 4) * 2 + 6;
-    const txStartY = innerY;
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(titleColor);
-    doc.text('Date', transactionsX, txStartY);
-    doc.text('Amount', transactionsX + 32, txStartY, { align: 'right' });
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    payload.topTransactions.slice(0, 4).forEach((txn, index) => {
-      const offset = txStartY + 6 + index * 8;
-      doc.setTextColor(textColor);
-      doc.text(txn.date, transactionsX, offset);
-      doc.text(this.formatCurrency(txn.amount), transactionsX + 32, offset, { align: 'right' });
-      doc.setFontSize(7.5);
-      doc.setTextColor('#6b7280');
-      doc.text(txn.title, transactionsX, offset + 4);
-      doc.setFontSize(8);
-    });
-
-    const totalPages = doc.getNumberOfPages();
-    for (let i = 1; i <= totalPages; i++) {
-      doc.setPage(i);
-      addFooter(i, totalPages);
-    }
-
-    doc.addPage();
-    reportHeader();
-    y = 28;
-
-    doc.setFontSize(10);
-    doc.setTextColor(titleColor);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Date Wise Summary Report', this.margin, y);
-    y += 6;
-
+    detailedRows.push([
+      'TOTAL',
+      '',
+      this.formatCurrency(payload.totalCounter),
+      '',
+      this.formatCurrency(payload.totalExpense),
+      this.formatCurrency(payload.closingInHand),
+    ]);
     autoTable(doc, {
-      startY: y,
-      head: [['Date', 'Counter', 'Expense', 'Running In Hand', 'Notes']],
-      body: payload.dateWiseSummary.map((row) => [row.date, this.formatCurrency(row.counter), this.formatCurrency(row.expense), this.formatCurrency(row.runningInHand), row.notes]),
-      theme: 'grid',
-      styles: { fontSize: 9, textColor, cellPadding: 2 },
-      headStyles: { fillColor: '#f1f5f9', textColor: titleColor, fontStyle: 'bold' },
-      columnStyles: {
-        1: { halign: 'right' },
-        2: { halign: 'right' },
-        3: { halign: 'right' },
-        4: { cellWidth: 'auto' },
-      },
-      margin: { left: this.margin, right: this.margin },
-      didDrawPage: () => {
-        // Footer pagination is handled after table rendering.
-      },
-    });
-
-    doc.addPage();
-    reportHeader();
-    y = 28;
-    doc.setFontSize(10);
-    doc.setTextColor(titleColor);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Date Wise Detailed Report', this.margin, y);
-    y += 6;
-
-    payload.detailedRecords.forEach((record, index) => {
-      if (y > this.pageHeight - 60) {
-        doc.addPage();
-        reportHeader();
-        y = 28;
-      }
-
-      doc.setFontSize(9);
-      doc.setTextColor(titleColor);
-      doc.setFont('helvetica', 'bold');
-      doc.text(record.date, this.margin, y);
-      y += 5;
-
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(textColor);
-      doc.setFontSize(9);
-      doc.text(`Previous In Hand: ${this.formatCurrency(record.previousInHand)}`, this.margin, y);
-      y += 4;
-      doc.text(`Counter: ${this.formatCurrency(record.counter)}`, this.margin, y);
-      y += 4;
-      doc.text(`Total Expense: ${this.formatCurrency(record.totalExpense)}`, this.margin, y);
-      y += 4;
-      doc.text(`Closing In Hand: ${this.formatCurrency(record.closingInHand)}`, this.margin, y);
-      y += 6;
-
-      if (record.expenses.length) {
-        autoTable(doc, {
-          startY: y,
-          head: [['Description', 'Category', 'Amount', 'Time', 'Notes']],
-          body: record.expenses.map((expense) => [expense.description, expense.category, this.formatCurrency(expense.amount), expense.time, expense.notes]),
-          theme: 'grid',
-          styles: { fontSize: 8.5, textColor, cellPadding: 2 },
-          headStyles: { fillColor: '#f1f5f9', textColor: titleColor, fontStyle: 'bold' },
-          columnStyles: {
-            2: { halign: 'right' },
-          },
-          margin: { left: this.margin, right: this.margin },
-          didDrawPage: (data) => {
-            if (data.cursor) {
-              y = data.cursor.y + 4;
-            }
-          },
-        });
-      } else {
-        doc.setFontSize(9);
-        doc.text('No Expenses', this.margin, y);
-        y += 8;
-      }
-    });
-
-    doc.addPage();
-    reportHeader();
-    y = 28;
-    doc.setFontSize(10);
-    doc.setTextColor(titleColor);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Additional Expense Breakdowns', this.margin, y);
-    y += 6;
-
-    autoTable(doc, {
-      startY: y,
-      head: [['Status', 'Amount', 'Share', 'Transactions']],
-      body: [
-        ['Paid', this.formatCurrency(payload.paidPendingSummary.paidAmount), `${payload.paidPendingSummary.paidPercentage.toFixed(1)}%`, this.formatNumber(payload.paidPendingSummary.paidCount)],
-        ['Pending', this.formatCurrency(payload.paidPendingSummary.pendingAmount), `${payload.paidPendingSummary.pendingPercentage.toFixed(1)}%`, this.formatNumber(payload.paidPendingSummary.pendingCount)],
-      ],
-      theme: 'grid',
-      styles: { fontSize: 9, textColor, cellPadding: 2 },
-      headStyles: { fillColor: '#f1f5f9', textColor: titleColor, fontStyle: 'bold' },
-      margin: { left: this.margin, right: this.margin },
-    });
-
-    y += 34;
-    doc.setFontSize(9);
-    doc.setTextColor(titleColor);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Payment Mode Breakdown', this.margin, y);
-    autoTable(doc, {
-      startY: y + 3,
-      head: [['Mode', 'Transactions', 'Amount', 'Share']],
-      body: payload.paymentModeSummary.map((item) => [
-        item.mode,
-        this.formatNumber(item.transactions),
-        this.formatCurrency(item.amount),
-        `${item.percentage.toFixed(1)}%`,
-      ]),
-      theme: 'grid',
-      styles: { fontSize: 9, textColor, cellPadding: 2 },
-      headStyles: { fillColor: '#f1f5f9', textColor: titleColor, fontStyle: 'bold' },
-      margin: { left: this.margin, right: this.margin },
-    });
-
-    y += 49;
-    doc.setFontSize(9);
-    doc.setTextColor(titleColor);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Category x Status', this.margin, y);
-    autoTable(doc, {
-      startY: y + 3,
-      head: [['Category', 'Paid Amount', 'Pending Amount', 'Total']],
-      body: [
-        ...payload.categoryStatusSummary.map((item) => [
-          item.category,
-          this.formatCurrency(item.paidAmount),
-          this.formatCurrency(item.pendingAmount),
-          this.formatCurrency(item.total),
-        ]),
+      startY: this.margin + 35,
+      head: [
         [
-          'Total',
-          this.formatCurrency(payload.categoryStatusSummary.reduce((sum, item) => sum + item.paidAmount, 0)),
-          this.formatCurrency(payload.categoryStatusSummary.reduce((sum, item) => sum + item.pendingAmount, 0)),
-          this.formatCurrency(payload.categoryStatusSummary.reduce((sum, item) => sum + item.total, 0)),
+          'Date',
+          'Opening balance',
+          'Counter',
+          'Expense details',
+          'Expense total',
+          'Closing balance',
         ],
       ],
-      theme: 'grid',
-      styles: { fontSize: 9, textColor, cellPadding: 2 },
-      headStyles: { fillColor: '#f1f5f9', textColor: titleColor, fontStyle: 'bold' },
-      margin: { left: this.margin, right: this.margin },
+      body: detailedRows,
+      theme: 'plain',
+      styles: {
+        font: 'helvetica',
+        fontSize: 8,
+        textColor: this.textColor,
+        cellPadding: { top: 4, right: 2, bottom: 4, left: 2 },
+        lineColor: this.borderColor,
+        lineWidth: { bottom: 0.25 },
+        valign: 'middle',
+      },
+      headStyles: {
+        fillColor: '#ffffff',
+        textColor: this.headingColor,
+        fontStyle: 'bold',
+        lineWidth: { bottom: 0.6 },
+        lineColor: this.headingColor,
+      },
+      columnStyles: {
+        0: { cellWidth: 19 },
+        1: { cellWidth: 25, halign: 'right' },
+        2: { cellWidth: 20, halign: 'right' },
+        3: { cellWidth: 'auto' },
+        4: { cellWidth: 23, halign: 'right' },
+        5: { cellWidth: 25, halign: 'right' },
+      },
+      margin: {
+        top: this.margin + 32,
+        left: this.margin + 4,
+        right: this.margin + 4,
+        bottom: this.margin + 12,
+      },
+      rowPageBreak: 'avoid',
+      didDrawPage: (data) => {
+        drawLedgerPageHeader();
+        this.drawPageNumber(doc, data.pageNumber + 1);
+      },
     });
-
-    const totalPagesFinal = doc.getNumberOfPages();
-    for (let i = 1; i <= totalPagesFinal; i++) {
-      doc.setPage(i);
-      addFooter(i, totalPagesFinal);
-    }
-
     doc.save(payload.fileName);
   }
 
-  private drawCategoryList(doc: jsPDF, categories: PdfReportPayload['categorySummary'], x: number, y: number) {
-    categories.forEach((item, index) => {
-      const blockHeight = 8;
-      const yPos = y + index * (blockHeight + 2);
-      doc.setFillColor(item.color);
-      doc.rect(x, yPos - 4, 4, blockHeight, 'F');
-      doc.setFontSize(9);
-      doc.setTextColor('#0f172a');
-      doc.text(`${item.category} (${item.percentage}%)`, x + 8, yPos + 2);
-      doc.setTextColor('#475569');
-      doc.text(this.formatCurrency(item.amount), this.pageWidth - this.margin, yPos + 2, { align: 'right' });
+  private drawPageFrame(doc: jsPDF): void {
+    const innerWidth = this.pageWidth - this.margin * 2;
+    doc.setDrawColor(this.borderColor);
+    doc.setLineWidth(0.6);
+    doc.roundedRect(
+      this.margin,
+      this.margin,
+      innerWidth,
+      this.pageHeight - this.margin * 2,
+      5,
+      5,
+      'S',
+    );
+  }
+
+  private drawHeader(
+    doc: jsPDF,
+    businessName: string,
+    title: string,
+    period: string,
+    generationDate: string,
+    compact = false,
+  ): void {
+    const top = this.margin + (compact ? 12 : 17);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(compact ? 14 : 16);
+    doc.setTextColor(this.headingColor);
+    doc.text(businessName, this.margin + 8, top);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(this.textColor);
+    doc.text('Cash and expense statement', this.margin + 8, top + 7);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(compact ? 10 : 11);
+    doc.setTextColor(this.headingColor);
+    doc.text(title, this.pageWidth - this.margin - 8, top - 1, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(this.textColor);
+    doc.text(`Date range: ${period}`, this.pageWidth - this.margin - 8, top + 5, {
+      align: 'right',
+    });
+    doc.text(
+      `Generated: ${this.formatShortDate(generationDate)}`,
+      this.pageWidth - this.margin - 8,
+      top + 10,
+      { align: 'right' },
+    );
+  }
+
+  protected createDocument(): jsPDF {
+    return new jsPDF({ format: 'a4', unit: 'mm', orientation: 'portrait' });
+  }
+
+  private drawPageNumber(doc: jsPDF, pageNumber: number): void {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor('#475569');
+    doc.text(String(pageNumber), this.pageWidth - this.margin, this.pageHeight - this.margin / 2, {
+      align: 'right',
     });
   }
 
-  private estimateTotalPages(rows: number): number {
-    return Math.max(4, Math.ceil(rows / 25) + 2);
-  }
+  private formatShortDate(value: string): string {
+    const isoDate = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (isoDate) {
+      return `${Number(isoDate[3])}/${Number(isoDate[2])}/${isoDate[1].slice(-2)}`;
+    }
 
-  private formatNumber(value: number): string {
-    return new Intl.NumberFormat('en-IN').format(value);
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) {
+      return value;
+    }
+    return `${date.getDate()}/${date.getMonth() + 1}/${String(date.getFullYear()).slice(-2)}`;
   }
 
   private formatCurrency(value: number): string {
@@ -459,6 +318,7 @@ export class PdfReportService {
     return {
       ...payload,
       reportTitle: this.sanitizeText(payload.reportTitle),
+      businessName: this.sanitizeText(payload.businessName),
       selectedRange: {
         from: this.sanitizeText(payload.selectedRange.from),
         to: this.sanitizeText(payload.selectedRange.to),

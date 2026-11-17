@@ -19,6 +19,7 @@ import {
   AreaChartPoint,
   ChartGeometryService,
 } from '../../services/chart-geometry.service';
+import { SettingsService } from '../../services/settings.service';
 import html2canvas from 'html2canvas';
 import { catchError, forkJoin, of, Subscription } from 'rxjs';
 
@@ -124,6 +125,7 @@ export class Analytics implements OnInit, OnDestroy {
     private pdfReportService: PdfReportService,
     private analyticsCalculator: AnalyticsCalculatorService,
     private chartGeometryService: ChartGeometryService,
+    private settingsService: SettingsService,
     private cd: ChangeDetectorRef,
     private sanitizer: DomSanitizer,
   ) {
@@ -445,6 +447,7 @@ export class Analytics implements OnInit, OnDestroy {
     return {
       fileName: `Analytics_Report_${this.selectedRange.from}_to_${this.selectedRange.to}.pdf`,
       reportTitle,
+      businessName: this.settingsService.settings$.getValue().businessName,
       selectedRange: this.selectedRange,
       generationDate,
       openingInHand,

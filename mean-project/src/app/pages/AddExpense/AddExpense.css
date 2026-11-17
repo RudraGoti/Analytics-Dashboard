@@ -166,6 +166,7 @@
 
 .expenses-table tbody tr.expense-row { vertical-align: middle; }
 .expenses-table tbody tr.expense-row td { padding: 6px 8px; }
+.expenses-table tbody td { font-size: 16px; }
 
 
 /* Column widths */
