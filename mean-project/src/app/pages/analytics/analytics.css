@@ -670,3 +670,155 @@
   font-weight: 500;
   white-space: nowrap;
 }
+
+.view-bill-button {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.view-bill-button .material-icons {
+  font-size: 18px;
+}
+
+.analytics-table .bill-column {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.expenses-workspace {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  gap: 16px;
+}
+
+.expenses-panel {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.expenses-panel > .table-wrap {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.bill-preview-panel {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 0 0 min(36%, 390px);
+  flex-direction: column;
+  overflow: auto;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.07);
+}
+
+.bill-preview-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  border-bottom: 1px solid var(--analytics-border);
+}
+
+.bill-preview-header h2 {
+  margin: 0;
+  color: var(--analytics-text);
+  font-size: 16px;
+}
+
+.bill-preview-header p {
+  margin: 5px 0 0;
+  color: var(--analytics-muted);
+  font-size: 11px;
+}
+
+.close-preview-button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 9px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 24px;
+  line-height: 1;
+  border: 0;
+  cursor: pointer;
+}
+
+.bill-preview-document {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  place-items: center;
+  padding: 18px;
+  overflow: auto;
+  background: #f8fafc;
+}
+
+.bill-preview-document img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.bill-preview-document iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  border: 0;
+  background: #fff;
+}
+
+.bill-preview-document p {
+  color: #b91c1c;
+  font-size: 12px;
+}
+
+.bill-preview-description {
+  padding: 18px 20px 24px;
+  border-top: 1px solid var(--analytics-border);
+}
+
+.bill-preview-description h3 {
+  margin: 0;
+  color: var(--analytics-text);
+  font-size: 13px;
+}
+
+.bill-preview-description p {
+  margin: 8px 0 0;
+  color: var(--analytics-soft-text);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 800px) {
+  .expenses-workspace {
+    flex-direction: column;
+  }
+
+  .expenses-panel {
+    min-height: min(60vh, 640px);
+  }
+
+  .bill-preview-panel {
+    min-height: 440px;
+    flex: 0 0 auto;
+  }
+}

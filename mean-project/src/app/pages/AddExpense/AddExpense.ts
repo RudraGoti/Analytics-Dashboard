@@ -127,6 +127,20 @@ export class AddExpense implements OnInit, OnDestroy {
       this.showSyncError('Enter a title and category for every expense.');
       return;
     }
+    if (expensesToSave.some((expense) => expense.status.toLowerCase() === 'paid' && !expense.mode)) {
+      this.showSyncError('Choose a payment mode for every paid expense.');
+      return;
+    }
+    if (expensesToSave.some((expense) => expense.status.toLowerCase() === 'paid' && !expense.paidDate)) {
+      this.showSyncError('Add the paid date for every paid expense.');
+      return;
+    }
+    const totalBillBytes = expensesToSave.reduce((total, expense) =>
+      total + (expense.billFile?.size || Math.ceil((expense.billData || '').length * 0.75)), 0);
+    if (totalBillBytes > 10 * 1024 * 1024) {
+      this.showSyncError('Bill attachments must total 10MB or less for each day.');
+      return;
+    }
 
     this.isSyncing = true;
     this.syncError = false;
@@ -138,7 +152,7 @@ export class AddExpense implements OnInit, OnDestroy {
       expenses: expensesToSave,
       action,
     }).subscribe({
-      next: () => this.finishSave(expensesToSave),
+      next: (response) => this.finishSave(response.data?.expenses || expensesToSave),
       error: (error: HttpErrorResponse) => {
         if (error.status === 409 && error.error?.conflict) {
           this.handleDuplicateDateConflict();
@@ -178,6 +192,8 @@ export class AddExpense implements OnInit, OnDestroy {
           this.counter = Number(record.counter || 0);
           this.expenses = (record.expenses || []).map((expense: Expense) => ({
             ...expense,
+            mode: expense.status === 'Paid' ? expense.mode || '' : '',
+            paidDate: expense.status === 'Paid' ? expense.paidDate || date : '',
             billFile: null,
             isOldEntry: true,
           }));
@@ -251,6 +267,7 @@ export class AddExpense implements OnInit, OnDestroy {
       && !expense.description.trim()
       && Number(expense.amount || 0) === 0
       && !expense.billFile
+      && !expense.billData
       && (!expense.category || expense.category === this.defaults.defaultCategory);
   }
 
@@ -260,7 +277,8 @@ export class AddExpense implements OnInit, OnDestroy {
       category: this.defaults.defaultCategory,
       amount: 0,
       status: this.defaults.defaultStatus,
-      mode: this.defaults.defaultMode,
+      mode: '',
+      paidDate: this.defaults.defaultStatus === 'Paid' ? this.selectedDate : '',
       description: '',
       isOldEntry: false,
     };
@@ -274,6 +292,12 @@ export class AddExpense implements OnInit, OnDestroy {
 
   selectStatus(index: number, status: string): void {
     this.expenses[index].status = status;
+    if (status === 'Pending') {
+      this.expenses[index].mode = '';
+      this.expenses[index].paidDate = '';
+    } else {
+      this.expenses[index].paidDate ||= this.selectedDate;
+    }
     this.openStatusDropdown = null;
   }
 
@@ -291,7 +315,7 @@ export class AddExpense implements OnInit, OnDestroy {
   onBillFileSelected(event: Event, index: number): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
-    const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+    const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif'];
     if (!validTypes.includes(file.type)) {
       alert('Please upload a valid file (PDF or Image)');
       return;
@@ -302,11 +326,14 @@ export class AddExpense implements OnInit, OnDestroy {
     }
     this.expenses[index].billFile = file;
     this.expenses[index].billFileName = file.name;
+    this.expenses[index].billContentType = file.type;
   }
 
   removeBillFile(index: number): void {
     this.expenses[index].billFile = null;
     this.expenses[index].billFileName = undefined;
+    this.expenses[index].billData = '';
+    this.expenses[index].billContentType = '';
   }
 
   triggerBillUpload(index: number): void {

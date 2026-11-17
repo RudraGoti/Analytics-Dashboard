@@ -20,4 +20,12 @@ describe('SidebarComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('closes the mobile menu after a navigation link is selected', () => {
+    component.isMobileMenuOpen = true;
+
+    component.closeMobileMenu();
+
+    expect(component.isMobileMenuOpen).toBe(false);
+  });
 });

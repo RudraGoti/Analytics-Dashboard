@@ -45,6 +45,90 @@ describe('Analytics', () => {
     expect(component.kpiChanges.counter).toBeNull();
   });
 
+  it('renders every expense in the selected range below the four overview cards', () => {
+    const range = component.selectedRange;
+    const previousRange = new Date(Date.parse(`${range.from}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
+    const expenses = Array.from({ length: 11 }, (_, index) => ({
+      title: `Expense ${index + 1}`,
+      category: 'Other',
+      amount: index + 1,
+      mode: '',
+      status: 'Pending',
+      description: '',
+    }));
+
+    http.expectOne((request) => request.url.endsWith('/expenses')
+      && request.params.get('dateFrom') === range.from)
+      .flush([{ date: range.from, counter: 100, expenses }]);
+    http.expectOne((request) => request.url.endsWith('/expenses')
+      && request.params.get('dateFrom') === previousRange).flush([]);
+    http.expectOne((request) => request.url.endsWith('/expenses/balance')
+      && request.params.get('before') === range.from)
+      .flush({ before: range.from, totalCounter: 0, totalExpenses: 0, balance: 0 });
+    http.expectOne((request) => request.url.endsWith('/expenses/balance')
+      && request.params.get('before') === previousRange)
+      .flush({ before: previousRange, totalCounter: 0, totalExpenses: 0, balance: 0 });
+
+    fixture.detectChanges();
+
+    const page = fixture.nativeElement as HTMLElement;
+    expect(page.textContent).toContain('All expenses of the selected date range');
+    expect(page.querySelectorAll('.kpi-card')).toHaveLength(4);
+    expect(page.querySelectorAll('tbody tr')).toHaveLength(11);
+    expect(page.querySelector('tbody')?.textContent).toContain('Expense 11');
+    expect(page.querySelector('.visualization-grid')).toBeNull();
+  });
+
+  it('opens and closes an attached bill preview', () => {
+    const range = component.selectedRange;
+    const previousRange = new Date(Date.parse(`${range.from}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:analytics-bill-preview');
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+
+    http.expectOne((request) => request.url.endsWith('/expenses')
+      && request.params.get('dateFrom') === range.from)
+      .flush([{
+        date: range.from,
+        expenses: [{
+          title: 'Supplies',
+          category: 'Other',
+          amount: 50,
+          status: 'Paid',
+          mode: 'Card',
+          description: 'Office supplies receipt',
+          billData: 'aGVsbG8=',
+          billContentType: 'image/png',
+          billFileName: 'receipt.png',
+        }],
+      }]);
+    http.expectOne((request) => request.url.endsWith('/expenses')
+      && request.params.get('dateFrom') === previousRange).flush([]);
+    http.expectOne((request) => request.url.endsWith('/expenses/balance')
+      && request.params.get('before') === range.from)
+      .flush({ before: range.from, totalCounter: 0, totalExpenses: 0, balance: 0 });
+    http.expectOne((request) => request.url.endsWith('/expenses/balance')
+      && request.params.get('before') === previousRange)
+      .flush({ before: previousRange, totalCounter: 0, totalExpenses: 0, balance: 0 });
+    fixture.detectChanges();
+
+    const page = fixture.nativeElement as HTMLElement;
+    page.querySelector<HTMLButtonElement>('.view-bill-button')?.click();
+    fixture.detectChanges();
+
+    expect(createObjectURL).toHaveBeenCalledOnce();
+    expect(page.querySelector('.bill-preview-panel')).not.toBeNull();
+    expect(page.querySelector<HTMLImageElement>('.bill-preview-document img')?.src)
+      .toBe('blob:analytics-bill-preview');
+    expect(page.querySelector('.bill-preview-description')?.textContent)
+      .toContain('Office supplies receipt');
+
+    page.querySelector<HTMLButtonElement>('.close-preview-button')?.click();
+    fixture.detectChanges();
+
+    expect(page.querySelector('.bill-preview-panel')).toBeNull();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:analytics-bill-preview');
+  });
+
   it('still generates the PDF report when the chart element is unavailable', async () => {
     const range = component.selectedRange;
     const previousRange = new Date(Date.parse(`${range.from}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);

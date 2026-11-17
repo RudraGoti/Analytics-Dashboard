@@ -40,4 +40,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.isMobileMenuOpen = !this.isMobileMenuOpen;
   }
 
+  closeMobileMenu(): void {
+    this.isMobileMenuOpen = false;
+  }
+
 }

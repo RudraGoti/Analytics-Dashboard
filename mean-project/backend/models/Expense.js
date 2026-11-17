@@ -38,11 +38,36 @@ const expenseSchema = new mongoose.Schema({
 
       mode: {
         type: String,
-        required: true
+        enum: ['', 'Cash', 'UPI', 'Card', 'Bank Transfer'],
+        required: function () { return this.status === 'Paid'; },
+        default: ''
+      },
+
+      paidDate: {
+        type: String,
+        required: function () { return this.status === 'Paid'; },
+        default: null
       },
 
       description: {
         type: String,
+        default: ''
+      },
+
+      billData: {
+        type: String,
+        default: ''
+      },
+
+      billContentType: {
+        type: String,
+        enum: ['', 'application/pdf', 'image/jpeg', 'image/png', 'image/gif'],
+        default: ''
+      },
+
+      billFileName: {
+        type: String,
+        maxlength: 255,
         default: ''
       }
     }

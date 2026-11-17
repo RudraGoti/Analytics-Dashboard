@@ -85,7 +85,7 @@ export class ReportBuilderService {
       category: expense.category || 'Other',
       amount: Number(expense.amount || 0),
       status: expense.status || 'Pending',
-      mode: expense.mode || 'Cash',
+      mode: expense.status === 'Paid' ? expense.mode || '' : '',
     })));
     const paidAmount = expenses
       .filter((expense) => expense.status === 'Paid')
@@ -94,13 +94,13 @@ export class ReportBuilderService {
       .filter((expense) => expense.status === 'Pending')
       .reduce((sum, expense) => sum + expense.amount, 0);
     const paymentModeSummary = ANALYTICS_MODES.map((mode) => {
-      const modeExpenses = expenses.filter((expense) => expense.mode === mode);
+      const modeExpenses = expenses.filter((expense) => expense.status === 'Paid' && expense.mode === mode);
       const amount = modeExpenses.reduce((sum, expense) => sum + expense.amount, 0);
       return {
         mode,
         transactions: modeExpenses.length,
         amount,
-        percentage: summary.totalExpenses ? (amount / summary.totalExpenses) * 100 : 0,
+        percentage: paidAmount ? (amount / paidAmount) * 100 : 0,
       };
     });
     const categoryStatusSummary = ANALYTICS_CATEGORIES.map((category) => {

@@ -9,8 +9,9 @@ describe('DaySummaryService', () => {
     service = TestBed.inject(DaySummaryService);
   });
 
-  it('calculates category, paid/pending, and payment-mode totals by amount', () => {
+  it('calculates category and paid/pending totals without assigning modes to pending expenses', () => {
     const summary = service.summarize({
+      date: '2026-03-10',
       counter: '1000',
       expenses: [
         { title: 'Stock', category: 'Product Purchase', amount: '300', status: 'Paid', mode: 'UPI' },
@@ -26,6 +27,8 @@ describe('DaySummaryService', () => {
     expect(summary.pendingTotal).toBe(200);
     expect(summary.pendingCount).toBe(1);
     expect(summary.categoryCount).toBe(3);
+    expect(summary.expenses[1]).toMatchObject({ status: 'Pending', mode: null, paidDate: null });
+    expect(summary.expenses[0].paidDate).toBe('2026-03-10');
     expect(summary.categories[0]).toMatchObject({
       name: 'Product Purchase',
       count: 1,
@@ -33,12 +36,12 @@ describe('DaySummaryService', () => {
       percentage: 50,
     });
     expect(summary.modes.map(({ name, amount }) => [name, amount])).toEqual([
-      ['Cash', 200],
+      ['Cash', 0],
       ['UPI', 300],
       ['Card', 100],
       ['Bank Transfer', 0],
     ]);
-    expect(summary.cashAmount).toBe(200);
+    expect(summary.cashAmount).toBe(0);
     expect(summary.digitalAmount).toBe(400);
   });
 
@@ -54,12 +57,12 @@ describe('DaySummaryService', () => {
       category: 'Other',
       categoryIcon: '📦',
       status: 'Pending',
-      mode: 'Cash',
+      mode: null,
     });
     expect(summary.pieGradient).toContain('#64748b 0% 75%');
     expect(summary.pieGradient).toContain('#2563eb 75% 100%');
-    expect(summary.cashPercentage).toBe(75);
-    expect(summary.digitalPercentage).toBe(25);
+    expect(summary.cashPercentage).toBe(0);
+    expect(summary.digitalPercentage).toBe(100);
     expect(summary.expenseCounterTone).toBe('red');
   });
 

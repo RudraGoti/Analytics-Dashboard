@@ -38,12 +38,16 @@ export type ExpenseFilters = {
 
 export interface AnalyticsExpense {
   date: string;
+  paidDate: string;
   title: string;
   category: string;
   amount: number;
   status: string;
   mode: string;
   description: string;
+  billData: string;
+  billContentType: string;
+  billFileName: string;
 }
 
 export interface AnalyticsCalculation {
@@ -100,7 +104,11 @@ interface ExpenseInput {
   amount?: unknown;
   status?: unknown;
   mode?: unknown;
+  paidDate?: unknown;
   description?: unknown;
+  billData?: unknown;
+  billContentType?: unknown;
+  billFileName?: unknown;
 }
 
 interface DailyExpenseInput {
@@ -177,13 +185,13 @@ export class AnalyticsCalculatorService {
       .sort((a, b) => b.amount - a.amount || this.categoryOrder(a.category) - this.categoryOrder(b.category));
 
     const modeSummary = ANALYTICS_MODES.map((mode) => {
-      const expenses = matchedExpenses.filter((expense) => expense.mode === mode);
+      const expenses = matchedExpenses.filter((expense) => expense.status === 'Paid' && expense.mode === mode);
       const amount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
       return {
         mode,
         transactions: expenses.length,
         amount,
-        percentage: total ? (amount / total) * 100 : 0,
+        percentage: paidTotal ? (amount / paidTotal) * 100 : 0,
       };
     });
 
@@ -251,14 +259,19 @@ export class AnalyticsCalculatorService {
 
   private normalizeExpense(expense: ExpenseInput, date: string): AnalyticsExpense {
     const amount = Number(expense.amount);
+    const status = this.stringValue(expense.status) || 'Pending';
     return {
       date,
+      paidDate: status === 'Paid' ? this.stringValue(expense.paidDate) || date : '',
       title: this.stringValue(expense.title) || 'Expense',
       category: this.stringValue(expense.category) || 'Other',
       amount: Number.isFinite(amount) ? amount : 0,
-      status: this.stringValue(expense.status) || 'Pending',
-      mode: this.stringValue(expense.mode) || 'Cash',
+      status,
+      mode: status === 'Paid' ? this.stringValue(expense.mode) : '',
       description: this.stringValue(expense.description),
+      billData: this.stringValue(expense.billData),
+      billContentType: this.stringValue(expense.billContentType),
+      billFileName: this.stringValue(expense.billFileName),
     };
   }
 

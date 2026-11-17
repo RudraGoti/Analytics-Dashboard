@@ -29,7 +29,7 @@ describe('AddExpense', () => {
     expect(component.expenses[0].isOldEntry).toBe(false);
   });
 
-  it('normalizes expense status and missing payment mode before saving', () => {
+  it('requires a payment mode before saving a paid expense', () => {
     component.expenses = [{
       title: 'Test expense',
       category: 'Rent',
@@ -41,11 +41,55 @@ describe('AddExpense', () => {
 
     component.saveExpenses();
 
-    const request = http.expectOne((req) => req.method === 'POST' && req.url.endsWith('/expenses'));
-    expect(request.request.body.expenses[0]).toMatchObject({
+    expect(component.syncError).toBe(true);
+    expect(component.syncErrorMessage).toContain('payment mode');
+    http.expectNone((req) => req.method === 'POST' && req.url.endsWith('/expenses'));
+  });
+
+  it('removes payment mode and paid date when an expense is pending', () => {
+    component.expenses = [{
+      title: 'Test expense',
+      category: 'Rent',
+      amount: 10,
       status: 'Paid',
       mode: 'Cash',
-    });
+      paidDate: '2025-03-10',
+      description: '',
+    }];
+    component.selectStatus(0, 'Pending');
+
+    expect(component.expenses[0].mode).toBe('');
+    expect(component.expenses[0].paidDate).toBe('');
+  });
+
+  it('starts new pending expenses without a payment mode', () => {
+    expect(component.expenses[0].status).toBe('Pending');
+    expect(component.expenses[0].mode).toBe('');
+  });
+
+  it('sets the entry date when marking a bill paid and leaves the mode unselected', () => {
+    component.selectStatus(0, 'Paid');
+    fixture.detectChanges();
+
+    expect(component.expenses[0].paidDate).toBe(component.selectedDate);
+    expect(component.expenses[0].mode).toBe('');
+    expect(fixture.nativeElement.querySelector('.paid-date-input')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.no-payment-mode')).toBeNull();
+  });
+
+  it('surfaces save errors from the server', () => {
+    component.expenses = [{
+      title: 'Test expense',
+      category: 'Rent',
+      amount: 10,
+      status: 'Paid',
+      mode: 'Cash',
+      paidDate: '2025-03-10',
+      description: '',
+    }];
+
+    component.saveExpenses();
+    const request = http.expectOne((req) => req.method === 'POST' && req.url.endsWith('/expenses'));
     request.flush({ success: false, error: 'Test response' }, { status: 400, statusText: 'Bad Request' });
     expect(component.syncError).toBe(true);
     expect(component.syncErrorMessage).toBe('Test response');
@@ -57,7 +101,7 @@ describe('AddExpense', () => {
       category: 'Rent',
       amount: 10,
       status: 'Pending',
-      mode: 'Cash',
+      mode: '',
       description: '',
     }];
 

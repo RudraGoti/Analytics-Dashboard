@@ -23,8 +23,8 @@
             <th class="col-title">Title</th>
             <th class="col-cat">Category</th>
             <th class="col-amount">Amount</th>
-            <th class="col-status">Status</th>
-            <th class="col-mode">Mode</th>
+            <th class="col-status">Status / paid on</th>
+            <th class="col-mode">Payment mode</th>
             <th class="col-desc">Description</th>
             <th class="col-bill">Bill</th>
             <th class="col-actions"></th>
@@ -126,12 +126,19 @@
                   </div>
 
                 </div>
-
+                <input
+                  *ngIf="expense.status === 'Paid'"
+                  class="paid-date-input"
+                  type="date"
+                  [(ngModel)]="expense.paidDate"
+                  aria-label="Paid date"
+                />
               </div>
             </td>
 
             <!-- Mode -->
             <td class="col-mode">
+              <ng-container *ngIf="expense.status === 'Paid'; else oldEntryUnpaidMode">
               <div class="cat-wrap">
 
                 <button
@@ -182,6 +189,8 @@
                 </div>
 
               </div>
+              </ng-container>
+              <ng-template #oldEntryUnpaidMode><span class="no-payment-mode">Not paid</span></ng-template>
             </td>
 
             <!-- Description -->
@@ -336,12 +345,19 @@
                   </div>
 
                 </div>
-
+                <input
+                  *ngIf="expense.status === 'Paid'"
+                  class="paid-date-input"
+                  type="date"
+                  [(ngModel)]="expense.paidDate"
+                  aria-label="Paid date"
+                />
               </div>
             </td>
 
             <!-- Mode -->
             <td class="col-mode">
+              <ng-container *ngIf="expense.status === 'Paid'; else newEntryUnpaidMode">
               <div class="cat-wrap">
 
                 <button
@@ -392,6 +408,8 @@
                 </div>
 
               </div>
+              </ng-container>
+              <ng-template #newEntryUnpaidMode><span class="no-payment-mode">Not paid</span></ng-template>
             </td>
 
             <!-- Description -->

@@ -172,7 +172,7 @@
 .col-title   { min-width: 140px; }
 .col-cat     { min-width: 180px; }
 .col-amount  { min-width: 130px; }
-.col-status  { min-width: 120px; }
+.col-status  { min-width: 150px; }
 .col-mode    { min-width: 140px; }
 .col-desc    { min-width: 160px; }
 .col-bill    { min-width: 110px; }
@@ -363,6 +363,23 @@
 }
 
 .mode-select:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+
+.paid-date-input {
+  width: 100%;
+  min-width: 0;
+  margin-top: 6px;
+  padding: 6px 7px;
+  border: 1.5px solid #e2e6ef;
+  border-radius: 7px;
+  color: #1a1d2e;
+  font: inherit;
+  font-size: 0.72rem;
+}
+
+.no-payment-mode {
+  color: #7b82a0;
+  font-size: 0.75rem;
+}
 
 /* ---- Delete button ---- */
 .del-btn {

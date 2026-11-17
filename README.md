@@ -1,16 +1,26 @@
 # Analytics-Dashboard
 
-To run frontend
- - cd 
- - npm install
- - ng serve
+## Run locally
 
-To run backend
- - cd backend
- - npx nodemon server.js
+Requirements: Node.js and npm, plus a MongoDB connection string.
 
-To connect database 
- - mkdir backend && cd backend
- - npm init -y
- - npm install express mongoose cors dotenv
- - npm install -D nodemon @types/node typescript ts-node
+Start the backend in one terminal:
+
+```bash
+cd mean-project/backend
+npm install
+# Copy .env.example to .env if needed, then set MONGO_URL in .env.
+npm start
+```
+
+Start the frontend in a second terminal:
+
+```bash
+cd mean-project
+npm install
+npm start
+```
+
+Open [http://localhost:4200](http://localhost:4200). The backend listens on
+port 3000 by default. See [mean-project/README.md](mean-project/README.md) for
+configuration, API, testing, and deployment details.

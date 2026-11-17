@@ -30,16 +30,22 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 export interface DayExpense {
+  id: string;
   title: string;
   category: string;
   categoryIcon: string;
   amount: number;
   status: 'Paid' | 'Pending';
-  mode: (typeof PAYMENT_MODES)[number];
+  mode: (typeof PAYMENT_MODES)[number] | null;
+  paidDate: string | null;
   description: string;
+  billData: string | null;
+  billContentType: string | null;
+  billFileName: string | null;
 }
 
 export interface DailyExpenseRecord {
+  date?: unknown;
   counter?: unknown;
   expenses?: unknown;
 }
@@ -110,7 +116,7 @@ export interface DayComparison {
 @Injectable({ providedIn: 'root' })
 export class DaySummaryService {
   summarize(record: DailyExpenseRecord | null): DaySummary {
-    const expenses = this.normalizeExpenses(record?.expenses);
+    const expenses = this.normalizeExpenses(record?.expenses, record?.date);
     const counter = this.toAmount(record?.counter);
     const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
     const paidExpenses = expenses.filter((expense) => expense.status === 'Paid');
@@ -118,9 +124,11 @@ export class DaySummaryService {
     const paidTotal = this.sumAmounts(paidExpenses);
     const pendingTotal = this.sumAmounts(pendingExpenses);
     const categories = this.buildCategories(expenses, totalExpenses);
-    const modes = this.buildModes(expenses, totalExpenses);
+    const modes = this.buildModes(expenses);
     const cashAmount = modes.find((mode) => mode.name === 'Cash')?.amount || 0;
-    const digitalAmount = totalExpenses - cashAmount;
+    const digitalAmount = modes
+      .filter((mode) => mode.name !== 'Cash')
+      .reduce((sum, mode) => sum + mode.amount, 0);
     const expenseCounterRatio = counter > 0
       ? (totalExpenses / counter) * 100
       : totalExpenses > 0 ? 100 : 0;
@@ -147,8 +155,8 @@ export class DaySummaryService {
       ),
       cashAmount,
       digitalAmount,
-      cashPercentage: totalExpenses ? (cashAmount / totalExpenses) * 100 : 0,
-      digitalPercentage: totalExpenses ? (digitalAmount / totalExpenses) * 100 : 0,
+      cashPercentage: paidTotal ? (cashAmount / paidTotal) * 100 : 0,
+      digitalPercentage: paidTotal ? (digitalAmount / paidTotal) * 100 : 0,
       expenseCounterRatio,
       expenseCounterProgress: Math.min(expenseCounterRatio, 100),
       expenseCounterTone: expenseCounterRatio < 60 ? 'green' : expenseCounterRatio <= 85 ? 'orange' : 'red',
@@ -187,7 +195,7 @@ export class DaySummaryService {
   ): { expenses: DayExpense[]; total: number } {
     const filteredExpenses = expenses
       .filter((expense) => !status || expense.status === status)
-      .filter((expense) => !mode || expense.mode === mode)
+      .filter((expense) => !mode || (expense.status === 'Paid' && expense.mode === mode))
       .sort((left, right) => amountSort === 'asc'
         ? left.amount - right.amount
         : right.amount - left.amount);
@@ -198,7 +206,7 @@ export class DaySummaryService {
     };
   }
 
-  private normalizeExpenses(value: unknown): DayExpense[] {
+  private normalizeExpenses(value: unknown, recordDate: unknown): DayExpense[] {
     if (!Array.isArray(value)) {
       return [];
     }
@@ -207,16 +215,27 @@ export class DaySummaryService {
       .map((expense) => {
         const category = this.normalizeCategory(expense['category']);
         const status = String(expense['status'] ?? '').toLowerCase() === 'paid' ? 'Paid' : 'Pending';
-        const mode = this.normalizeMode(expense['mode']);
+        const mode = status === 'Paid' ? this.normalizeMode(expense['mode']) : null;
 
         return {
+          id: typeof expense['_id'] === 'string'
+            ? expense['_id']
+            : typeof expense['id'] === 'string' ? expense['id'] : '',
           title: typeof expense['title'] === 'string' ? expense['title'] : '',
           category,
           categoryIcon: CATEGORY_ICONS[category],
           amount: this.toAmount(expense['amount']),
           status,
           mode,
+          paidDate: status === 'Paid'
+            ? (typeof expense['paidDate'] === 'string' && expense['paidDate']
+              ? expense['paidDate']
+              : typeof recordDate === 'string' ? recordDate : null)
+            : null,
           description: typeof expense['description'] === 'string' ? expense['description'] : '',
+          billData: typeof expense['billData'] === 'string' && expense['billData'] ? expense['billData'] : null,
+          billContentType: typeof expense['billContentType'] === 'string' ? expense['billContentType'] : null,
+          billFileName: typeof expense['billFileName'] === 'string' ? expense['billFileName'] : null,
         };
       });
   }
@@ -226,11 +245,11 @@ export class DaySummaryService {
     return Object.prototype.hasOwnProperty.call(DAY_CATEGORY_COLORS, category) ? category : 'Other';
   }
 
-  private normalizeMode(value: unknown): (typeof PAYMENT_MODES)[number] {
+  private normalizeMode(value: unknown): (typeof PAYMENT_MODES)[number] | null {
     const mode = typeof value === 'string'
       ? PAYMENT_MODES.find((item) => item.toLowerCase() === value.trim().toLowerCase())
       : undefined;
-    return mode || 'Cash';
+    return mode || null;
   }
 
   private buildCategories(expenses: readonly DayExpense[], total: number): CategorySummary[] {
@@ -257,15 +276,17 @@ export class DaySummaryService {
       .sort((left, right) => right.amount - left.amount);
   }
 
-  private buildModes(expenses: readonly DayExpense[], total: number): ModeSummary[] {
+  private buildModes(expenses: readonly DayExpense[]): ModeSummary[] {
+    const paidExpenses = expenses.filter((expense) => expense.status === 'Paid');
+    const paidTotal = this.sumAmounts(paidExpenses);
     return PAYMENT_MODES.map((name) => {
-      const matching = expenses.filter((expense) => expense.mode === name);
+      const matching = paidExpenses.filter((expense) => expense.mode === name);
       const amount = this.sumAmounts(matching);
       return {
         name,
         amount,
         count: matching.length,
-        percentage: total ? (amount / total) * 100 : 0,
+        percentage: paidTotal ? (amount / paidTotal) * 100 : 0,
       };
     });
   }

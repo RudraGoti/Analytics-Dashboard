@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ExpenseService, Expense } from '../../services/expense.service';
 import { DateService, DateRange } from '../../services/date.service';
 import { PdfReportService, PdfReportPayload } from '../../services/pdf-report.service';
@@ -10,6 +11,7 @@ import {
   CATEGORY_COLORS,
   AnalyticsCalculation,
   AnalyticsCalculatorService,
+  AnalyticsExpense,
   ExpenseFilters,
 } from '../../services/analytics-calculator.service';
 import {
@@ -99,6 +101,10 @@ export class Analytics implements OnInit, OnDestroy {
   pdfMessage = '';
   errorMessage = '';
   openingInHand = 0;
+  billPreview: AnalyticsExpense | null = null;
+  billPreviewUrl: string | null = null;
+  billPreviewResourceUrl: SafeResourceUrl | null = null;
+  billPreviewError = '';
   private loadVersion = 0;
   private rangeSubscription = new Subscription();
 
@@ -119,6 +125,7 @@ export class Analytics implements OnInit, OnDestroy {
     private analyticsCalculator: AnalyticsCalculatorService,
     private chartGeometryService: ChartGeometryService,
     private cd: ChangeDetectorRef,
+    private sanitizer: DomSanitizer,
   ) {
     this.analyticsData = this.analyticsCalculator.calculate([], this.filters, this.selectedRange);
     this.areaChart = this.chartGeometryService.buildAreaChart([]);
@@ -134,9 +141,11 @@ export class Analytics implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.rangeSubscription.unsubscribe();
+    this.closeBillPreview();
   }
 
   loadAnalytics(range: DateRange): void {
+    this.closeBillPreview();
     const requestVersion = ++this.loadVersion;
     const requestRange = { ...range };
     const previousRange = this.getPreviousRange(range);
@@ -370,6 +379,41 @@ export class Analytics implements OnInit, OnDestroy {
       this.isGeneratingPdf = false;
       this.cd.markForCheck();
     }
+  }
+
+  openBillPreview(expense: AnalyticsExpense): void {
+    this.closeBillPreview();
+    this.billPreview = expense;
+    try {
+      const supportedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif'];
+      if (!expense.billData || !supportedTypes.includes(expense.billContentType)) {
+        throw new Error('This bill attachment is unavailable or unsupported.');
+      }
+      const binary = atob(expense.billData);
+      const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+      const url = URL.createObjectURL(new Blob([bytes], { type: expense.billContentType }));
+      this.billPreviewUrl = url;
+      if (expense.billContentType === 'application/pdf') {
+        this.billPreviewResourceUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+      }
+    } catch (error) {
+      console.error('Failed to open bill attachment', error);
+      this.billPreviewError = 'Unable to display this bill attachment.';
+    }
+  }
+
+  closeBillPreview(): void {
+    this.revokeBillPreviewUrl();
+    this.billPreview = null;
+    this.billPreviewError = '';
+  }
+
+  private revokeBillPreviewUrl(): void {
+    if (this.billPreviewUrl) {
+      URL.revokeObjectURL(this.billPreviewUrl);
+    }
+    this.billPreviewUrl = null;
+    this.billPreviewResourceUrl = null;
   }
 
   private async captureTrendChart(): Promise<string | undefined> {
